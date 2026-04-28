@@ -104,6 +104,28 @@ class HomeResponse {
     required this.categories,
     required this.instructors,
   });
+
+  factory HomeResponse.fromJson(Map<String, dynamic> json) {
+    return HomeResponse(
+      categories: (json['categories'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      banners: (json['banners'] as List<dynamic>?)
+              ?.map((e) => BannerModel.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+      continueLearning: (json['continue_learning'] as List<dynamic>?)
+              ?.map((e) => CourseSummary.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+      featuredCourses: (json['featured_courses'] as List<dynamic>?)
+              ?.map((e) => CourseSummary.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+      instructors: (json['instructors'] as List<dynamic>?)
+              ?.map((e) => InstructorSummary.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+    );
+  }
 }
 
 class BannerModel {
@@ -120,6 +142,16 @@ class BannerModel {
     required this.image,
     required this.colors,
   });
+
+  factory BannerModel.fromJson(Map<String, dynamic> json) {
+    return BannerModel(
+      title: json['title'] as String? ?? '',
+      subtitle: json['subtitle'] as String? ?? '',
+      badge: json['badge'] as String? ?? '',
+      image: json['image'] as String? ?? '',
+      colors: (json['colors'] as List<dynamic>?)?.map((e) => e as int).toList() ?? [],
+    );
+  }
 }
 
 class CourseSummary {
@@ -152,6 +184,24 @@ class CourseSummary {
     this.originalPrice = 0,
     this.level = 'Beginner',
   });
+
+  factory CourseSummary.fromJson(Map<String, dynamic> json) {
+    return CourseSummary(
+      id: json['id'] as String? ?? '',
+      title: json['title'] as String? ?? '',
+      instructor: json['instructor'] as String? ?? 'Unknown',
+      category: json['category'] as String? ?? 'Uncategorized',
+      image: json['image'] as String? ?? '',
+      progress: json['progress'] != null ? (json['progress'] as num).toDouble() : null,
+      badge: json['badge'] as String?,
+      discount: json['discount'] as String?,
+      rating: json['rating'] != null ? (json['rating'] as num).toDouble() : 0.0,
+      reviews: (json['reviews'] as num?)?.toInt() ?? 0,
+      price: (json['price'] as num?)?.toInt() ?? 0,
+      originalPrice: (json['original_price'] as num?)?.toInt() ?? 0,
+      level: json['level'] as String? ?? 'Beginner',
+    );
+  }
 }
 
 class InstructorSummary {
@@ -164,4 +214,12 @@ class InstructorSummary {
     required this.initial,
     required this.colors,
   });
+
+  factory InstructorSummary.fromJson(Map<String, dynamic> json) {
+    return InstructorSummary(
+      name: json['name'] as String? ?? '',
+      initial: json['initial'] as String? ?? '',
+      colors: (json['colors'] as List<dynamic>?)?.map((e) => e as int).toList() ?? [],
+    );
+  }
 }

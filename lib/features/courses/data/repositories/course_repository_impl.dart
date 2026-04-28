@@ -26,8 +26,11 @@ class CourseRepositoryImpl implements ICourseRepository {
   Future<HomeResponse> getHomeData() async {
     try {
       final response = await apiClient.get('courses/home');
-      // Mapping logic...
-      throw UnimplementedError('Real API mapping not yet implemented for HomeResponse');
+      if (response.data != null && response.data['data'] != null) {
+        return HomeResponse.fromJson(response.data['data'] as Map<String, dynamic>);
+      } else {
+        throw Exception('Invalid API response format');
+      }
     } catch (e) {
       rethrow;
     }

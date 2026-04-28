@@ -31,6 +31,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   
   HomeResponse? _homeData;
   bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -58,12 +59,22 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   Future<void> _loadHomeData() async {
-    final data = await sl<ICourseRepository>().getHomeData();
-    if (mounted) {
-      setState(() {
-        _homeData = data;
-        _isLoading = false;
-      });
+    try {
+      final data = await sl<ICourseRepository>().getHomeData();
+      if (mounted) {
+        setState(() {
+          _homeData = data;
+          _isLoading = false;
+        });
+      }
+    } catch (e, stackTrace) {
+      debugPrint('Error loading home data: $e\n$stackTrace');
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString();
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -107,6 +118,19 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   Widget _buildHomeContent(bool isDark) {
     if (_isLoading) {
       return Center(child: CircularProgressIndicator(color: isDark ? ThemeColors.burgundyLight : const Color(0xFF6A1B9A)));
+    }
+
+    if (_errorMessage != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Text(
+            "Failed to load data:\n$_errorMessage",
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.red, fontSize: 16),
+          ),
+        ),
+      );
     }
 
     return FadeTransition(

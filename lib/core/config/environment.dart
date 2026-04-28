@@ -4,7 +4,7 @@ class EnvironmentConfig {
   static const Environment env = Environment.development;
 
   // API Base URLs
-  static const String devBaseUrl = 'https://xh48v3q5-8000.inc1.devtunnels.ms/api/';
+  static const String devBaseUrl = 'http://127.0.0.1:8000/api/';
   static const String stagingBaseUrl = 'https://api-staging.learningapp.local';
   static const String prodBaseUrl = 'https://api.learningapp.com';
 

@@ -10,9 +10,12 @@ class SubscriptionRepositoryImpl implements ISubscriptionRepository {
   @override
   Future<SubscriptionResponse> getSubscriptionData() async {
     try {
-      final response = await apiClient.get('payments/subscriptions');
-      // Mapping logic...
-      throw UnimplementedError('Real API mapping not yet implemented for SubscriptionResponse');
+      final response = await apiClient.get('payments/plans');
+      if (response.data != null && response.data['data'] != null) {
+        return SubscriptionResponse.fromJson(response.data['data'] as Map<String, dynamic>);
+      } else {
+        throw Exception('Invalid API response format for subscriptions');
+      }
     } catch (e) {
       rethrow;
     }
