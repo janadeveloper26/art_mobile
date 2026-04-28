@@ -1,0 +1,90 @@
+name: art_mobile
+description: A production learning app with video streaming, state management with BLoC, and clean architecture patterns.
+publish_to: "none"
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.2.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State Management
+  flutter_bloc: ^8.1.6
+
+  # Router & Navigation
+  go_router: ^14.8.1
+
+  # HTTP & REST API
+  dio: ^5.7.0
+  pretty_dio_logger: ^1.4.0
+
+  # Local Storage & Security
+  shared_preferences: ^2.5.0
+  flutter_secure_storage: ^9.2.4
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+
+  # Video Player & Streaming
+  video_player: ^2.10.0
+  chewie: ^1.8.5
+
+  # Image Loading & Caching
+  cached_network_image: ^3.4.1
+  shimmer: ^3.0.0
+
+  # Data Models & Serialization
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+  equatable: ^2.0.7
+
+  # Utilities
+  intl: ^0.19.0
+  logger: ^2.2.0
+  connectivity_plus: ^6.1.0
+  package_info_plus: ^8.1.0
+
+  # ⚠️ Keep only if truly needed
+  devicelocale: ^0.7.0
+
+  # UI & Design
+  google_fonts: ^8.0.2
+  flutter_svg: ^2.1.0
+  lottie: ^3.2.0
+  animations: ^2.0.11
+
+  # Error Handling
+  dartz: ^0.10.1
+
+  # Dependency Injection
+  get_it: ^7.7.0
+
+  # Time & Date
+  timeago: ^3.7.0
+  lucide_icons: ^0.257.0
+  path_provider: ^2.1.5
+  permission_handler: ^12.0.1
+  screen_protector: ^1.5.1
+  firebase_core: ^4.7.0
+  firebase_messaging: ^16.2.0
+  flutter_local_notifications: ^21.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^4.0.0
+  build_runner: ^2.4.13
+  freezed: ^2.5.2
+  json_serializable: ^6.9.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/icons/
+    - assets/animations/
+    - assets/videos/
