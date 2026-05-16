@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:screen_protector/screen_protector.dart';
 
 /// [SecurityService] handles application-level security features such as
@@ -17,6 +17,7 @@ class SecurityService {
 
   /// Enables screenshot and screen recording protection.
   Future<void> protectApp() async {
+    if (kIsWeb) return;
     try {
       // ScreenProtector provides cross-platform support for FLAG_SECURE on Android
       // and screenshot detection/prevention on iOS.
@@ -29,6 +30,7 @@ class SecurityService {
 
   /// Disable protection
   Future<void> disableProtection() async {
+    if (kIsWeb) return;
     try {
       await ScreenProtector.preventScreenshotOff();
     } catch (e) {

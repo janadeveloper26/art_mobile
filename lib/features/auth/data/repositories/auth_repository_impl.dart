@@ -4,29 +4,24 @@ import 'package:flutter/foundation.dart';
 import 'package:art_mobile/core/errors/failures.dart';
 import 'package:art_mobile/core/network/api_client.dart';
 import 'package:art_mobile/features/auth/data/models/auth_models.dart';
+import 'package:art_mobile/features/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:art_mobile/features/auth/domain/repositories/auth_repository.dart';
 
 class AuthRepositoryImpl implements IAuthRepository {
   final ApiClient apiClient;
+  final IAuthRemoteDataSource remoteDataSource;
 
-  AuthRepositoryImpl({required this.apiClient});
+  AuthRepositoryImpl({
+    required this.apiClient,
+    required this.remoteDataSource,
+  });
 
   @override
-  Future<Either<Failure, OtpRequestResponse>> requestOtp(String phone) async {
+  Future<Either<Failure, OtpData>> requestOtp(String phone) async {
     try {
       debugPrint('🔑 Requesting OTP for $phone');
-      final response = await apiClient.post(
-        'auth/otp/request',
-        data: {'phone': phone},
-      );
-      
-      if (response.data != null) {
-        debugPrint('🔓 OTP Request Successful: ${response.data}');
-        return Right(OtpRequestResponse.fromJson(response.data));
-      } else {
-        debugPrint('⚠️ OTP Request: Empty response');
-        return const Left(ServerFailure(message: 'Empty response from server'));
-      }
+      final result = await remoteDataSource.requestOtp(phone);
+      return Right(result);
     } on DioException catch (e) {
       return Left(_handleDioError(e));
     } catch (e) {
@@ -35,28 +30,29 @@ class AuthRepositoryImpl implements IAuthRepository {
   }
 
   @override
-  Future<Either<Failure, OtpVerifyResponse>> verifyOtp(String phone, String otp, {String? name, String? sessionId}) async {
+  Future<Either<Failure, AuthData>> verifyOtp({
+    required String idToken,
+    String? name,
+    required DeviceMetadata device,
+  }) async {
     try {
-      debugPrint('🔑 Verifying OTP for $phone | OTP: $otp | Name: $name');
-      final payload = {
-        'phone': phone,
-        'otp': otp,
-      };
-      if (name != null) payload['name'] = name;
-      if (sessionId != null) payload['session_id'] = sessionId;
+      debugPrint('🔑 Verifying OTP via token | Name: $name');
+      final request = OtpVerifyRequest(idToken: idToken, name: name, device: device);
+      final result = await remoteDataSource.verifyOtp(request);
+      return Right(result);
+    } on DioException catch (e) {
+      return Left(_handleDioError(e));
+    } catch (e) {
+      return Left(UnexpectedFailure(message: e.toString()));
+    }
+  }
 
-      final response = await apiClient.post(
-        'auth/otp/verify',
-        data: payload,
-      );
-      
-      if (response.data != null) {
-        debugPrint('🔓 OTP Verification Successful: ${response.data}');
-        return Right(OtpVerifyResponse.fromJson(response.data));
-      } else {
-        debugPrint('⚠️ OTP Verification: Empty response');
-        return const Left(ServerFailure(message: 'Empty response from server'));
-      }
+  @override
+  Future<Either<Failure, AuthData>> firebaseLogin(String idToken, DeviceMetadata device) async {
+    try {
+      final request = FirebaseLoginRequest(idToken: idToken, device: device);
+      final result = await remoteDataSource.firebaseLogin(request);
+      return Right(result);
     } on DioException catch (e) {
       return Left(_handleDioError(e));
     } catch (e) {

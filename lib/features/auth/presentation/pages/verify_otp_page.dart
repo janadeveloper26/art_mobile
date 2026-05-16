@@ -12,12 +12,12 @@ import '../bloc/otp_bloc.dart';
 /// glassmorphism hints and sophisticated animations.
 class VerifyOtpPage extends StatelessWidget {
   final String phoneNumber;
-  final String sessionId;
+  final String verificationId;
   
   const VerifyOtpPage({
     super.key, 
     required this.phoneNumber,
-    required this.sessionId,
+    required this.verificationId,
   });
 
   @override
@@ -25,7 +25,7 @@ class VerifyOtpPage extends StatelessWidget {
     return BlocProvider(
       create: (context) => OtpBloc(
         phoneNumber: phoneNumber,
-        sessionId: sessionId,
+        verificationId: verificationId,
       )..add(StartResendTimer()),
       child: BlocListener<OtpBloc, OtpState>(
         listener: (context, state) async {
@@ -51,6 +51,8 @@ class VerifyOtpPage extends StatelessWidget {
             if (context.mounted) {
               Navigator.pushNamedAndRemoveUntil(context, AppRoutes.home, (route) => false);
             }
+          } else if (state.isPendingApproval) {
+            Navigator.pushNamed(context, AppRoutes.devicePendingApproval);
           }
         },
         child: VerifyOtpView(phoneNumber: phoneNumber),

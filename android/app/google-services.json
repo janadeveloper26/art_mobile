@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "832843490506",
+    "project_id": "glouriousart-94699",
+    "storage_bucket": "glouriousart-94699.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:832843490506:android:ac1200e2f60ee0256c0033",
+        "android_client_info": {
+          "package_name": "com.example.learning_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "832843490506-9fglpf1pnr770uaspe23n2l6vb191927.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDkoImdGTrb4XSYwkkHFiud4Sk9m79UD7k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "832843490506-9fglpf1pnr770uaspe23n2l6vb191927.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

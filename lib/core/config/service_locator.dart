@@ -6,10 +6,13 @@ import 'package:art_mobile/core/network/interceptors/error_interceptor.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:art_mobile/core/theme/theme_manager.dart';
+import 'package:art_mobile/core/services/device_service.dart';
 
 // Features
 import 'package:art_mobile/features/auth/domain/repositories/auth_repository.dart';
 import 'package:art_mobile/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:art_mobile/features/auth/data/datasources/auth_remote_datasource.dart';
+import 'package:art_mobile/features/auth/services/firebase_auth_service.dart';
 import 'package:art_mobile/features/courses/data/mock_course_service.dart'; // Still needed for interface
 import 'package:art_mobile/features/courses/data/repositories/course_repository_impl.dart';
 import 'package:art_mobile/features/subscription/data/mock_subscription_repository.dart'; // Still needed for interface
@@ -29,12 +32,29 @@ Future<void> setupServiceLocator() async {
   // Theme Manager
   sl.registerSingleton<ThemeManager>(ThemeManager(sharedPreferences));
 
+  // Device Service
+  final deviceService = DeviceService();
+  await deviceService.init();
+  sl.registerSingleton<DeviceService>(deviceService);
+
   // Network Layer
   _setupNetworkLayer();
 
+  // Services
+  final firebaseAuthService = FirebaseAuthService();
+  await firebaseAuthService.initialize();
+  sl.registerLazySingleton<FirebaseAuthService>(() => firebaseAuthService);
+
   // Repositories
+  sl.registerLazySingleton<IAuthRemoteDataSource>(
+    () => AuthRemoteDataSourceImpl(apiClient: sl<ApiClient>()),
+  );
+
   sl.registerLazySingleton<IAuthRepository>(
-    () => AuthRepositoryImpl(apiClient: sl<ApiClient>()),
+    () => AuthRepositoryImpl(
+      apiClient: sl<ApiClient>(),
+      remoteDataSource: sl<IAuthRemoteDataSource>(),
+    ),
   );
   
   sl.registerLazySingleton<ICourseRepository>(

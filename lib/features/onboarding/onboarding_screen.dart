@@ -121,32 +121,32 @@ class _OnboardingViewState extends State<OnboardingView> with TickerProviderStat
       child: Stack(
         children: [
           // Decorative Blobs (Isolated in RepaintBoundary for performance)
-          RepaintBoundary(
-            child: AnimatedBuilder(
-              animation: _blobController,
-              builder: (context, child) => Positioned(
-                top: -60,
-                right: -40,
-                child: Transform.scale(
+          Positioned(
+            top: -60,
+            right: -40,
+            child: RepaintBoundary(
+              child: AnimatedBuilder(
+                animation: _blobController,
+                builder: (context, child) => Transform.scale(
                   scale: 1.0 + (_blobController.value * 0.3),
                   child: Opacity(opacity: 0.1 + (_blobController.value * 0.1), child: child),
                 ),
+                child: Container(width: 200, height: 200, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle)),
               ),
-              child: Container(width: 200, height: 200, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle)),
             ),
           ),
-          RepaintBoundary(
-            child: AnimatedBuilder(
-              animation: _blobController,
-              builder: (context, child) => Positioned(
-                bottom: 20,
-                left: -20,
-                child: Transform.scale(
+          Positioned(
+            bottom: 20,
+            left: -20,
+            child: RepaintBoundary(
+              child: AnimatedBuilder(
+                animation: _blobController,
+                builder: (context, child) => Transform.scale(
                   scale: 1.0 + ((1.0 - _blobController.value) * 0.2),
                   child: Opacity(opacity: 0.1, child: child),
                 ),
+                child: Container(width: 140, height: 140, decoration: BoxDecoration(color: Color(slide.accentColor), shape: BoxShape.circle)),
               ),
-              child: Container(width: 140, height: 140, decoration: BoxDecoration(color: Color(slide.accentColor), shape: BoxShape.circle)),
             ),
           ),
         ],

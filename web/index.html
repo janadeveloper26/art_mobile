@@ -19,6 +19,7 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A new Flutter project.">
+  <meta name="google-signin-client_id" content="832843490506-9fglpf1pnr770uaspe23n2l6vb191927.apps.googleusercontent.com">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -31,6 +32,23 @@
 
   <title>learning_app</title>
   <link rel="manifest" href="manifest.json">
+  <style>
+    html, body {
+      height: 100%;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: #ffffff;
+    }
+    #recaptcha-container {
+      position: fixed;
+      bottom: 0;
+      right: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
+  </style>
 </head>
 <body>
   <!--
@@ -41,6 +59,7 @@
     For more details:
     * https://docs.flutter.dev/platform-integration/web/initialization
   -->
+  <div id="recaptcha-container"></div>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

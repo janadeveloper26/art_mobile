@@ -4,6 +4,7 @@ import 'package:art_mobile/features/onboarding/onboarding_screen.dart';
 import 'package:art_mobile/features/splash/splash_screen.dart';
 import 'package:art_mobile/features/auth/presentation/pages/login_page.dart';
 import 'package:art_mobile/features/auth/presentation/pages/verify_otp_page.dart';
+import 'package:art_mobile/features/auth/presentation/pages/device_pending_approval_page.dart';
 import 'package:art_mobile/features/courses/presentation/pages/courses_page.dart';
 import 'package:art_mobile/features/home/home_page.dart';
 import 'package:art_mobile/features/notifications/presentation/pages/notifications_page.dart';
@@ -25,6 +26,7 @@ class AppRoutes {
   static const String videoPlayer = '/video-player';
   static const String subscription = '/subscription';
   static const String courseDetail = '/course-detail';
+  static const String devicePendingApproval = '/device-pending-approval';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -43,9 +45,11 @@ class AppRoutes {
         return MaterialPageRoute(
           builder: (_) => VerifyOtpPage(
             phoneNumber: args?['phoneNumber'] ?? '',
-            sessionId: args?['sessionId'] ?? '',
+            verificationId: args?['verificationId'] ?? '',
           ),
         );
+      case devicePendingApproval:
+        return MaterialPageRoute(builder: (_) => const DevicePendingApprovalPage());
       case home:
         return MaterialPageRoute(builder: (_) => HomePage());
       case courses:

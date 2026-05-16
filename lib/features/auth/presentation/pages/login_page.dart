@@ -40,9 +40,11 @@ class LoginPage extends StatelessWidget {
               AppRoutes.verifyOtp,
               arguments: {
                 'phoneNumber': '+91 ${state.phoneNumber}',
-                'sessionId': state.sessionId,
+                'verificationId': state.verificationId,
               },
             );
+          } else if (state.isPendingApproval) {
+            Navigator.pushNamed(context, AppRoutes.devicePendingApproval);
           } else if (state.isGoogleSuccess) {
             Navigator.pushNamedAndRemoveUntil(context, AppRoutes.home, (route) => false);
           }

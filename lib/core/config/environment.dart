@@ -4,9 +4,9 @@ class EnvironmentConfig {
   static const Environment env = Environment.development;
 
   // API Base URLs
-  static const String devBaseUrl = 'http://127.0.0.1:8000/api/';
+  static const String devBaseUrl = 'http://192.168.29.72:8000/api/v1/';
   static const String stagingBaseUrl = 'https://api-staging.learningapp.local';
-  static const String prodBaseUrl = 'https://api.learningapp.com';
+  static const String prodBaseUrl = 'https://api.gloriousartcreations.com';
 
   static String get baseUrl {
     switch (env) {

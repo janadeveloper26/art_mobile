@@ -115,53 +115,53 @@ class _SplashViewState extends State<SplashView> with TickerProviderStateMixin {
           // 2. DECORATIVE BLOBS (Animated)
           // ---------------------------------------------------------
           // Top-Right Blob
-          AnimatedBuilder(
-            animation: _blobController,
-            builder: (context, child) {
-              return Positioned(
-                top: -80,
-                right: -80,
-                child: Transform.scale(
+          Positioned(
+            top: -80,
+            right: -80,
+            child: AnimatedBuilder(
+              animation: _blobController,
+              builder: (context, child) {
+                return Transform.scale(
                   scale: 1.0 + (_blobController.value * 0.15),
                   child: Opacity(
                     opacity: 0.15 + (_blobController.value * 0.1),
                     child: child,
                   ),
+                );
+              },
+              child: Container(
+                width: 300,
+                height: 300,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFC107).withOpacity(0.3), // Gold blob
+                  shape: BoxShape.circle,
                 ),
-              );
-            },
-            child: Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFC107).withOpacity(0.3), // Gold blob
-                shape: BoxShape.circle,
               ),
             ),
           ),
 
           // Bottom-Left Blob
-          AnimatedBuilder(
-            animation: _blobController,
-            builder: (context, child) {
-              return Positioned(
-                bottom: -60,
-                left: -60,
-                child: Transform.scale(
+          Positioned(
+            bottom: -60,
+            left: -60,
+            child: AnimatedBuilder(
+              animation: _blobController,
+              builder: (context, child) {
+                return Transform.scale(
                   scale: 1.0 + ((1.0 - _blobController.value) * 0.2),
                   child: Opacity(
                     opacity: 0.1 + ((1.0 - _blobController.value) * 0.1),
                     child: child,
                   ),
+                );
+              },
+              child: Container(
+                width: 200,
+                height: 200,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  shape: BoxShape.circle,
                 ),
-              );
-            },
-            child: Container(
-              width: 200,
-              height: 200,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                shape: BoxShape.circle,
               ),
             ),
           ),
