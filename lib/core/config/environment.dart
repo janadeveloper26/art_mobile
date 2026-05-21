@@ -1,12 +1,12 @@
 enum Environment { development, staging, production }
 
 class EnvironmentConfig {
-  static const Environment env = Environment.development;
+  static const Environment env = Environment.production;
 
   // API Base URLs
   static const String devBaseUrl = 'http://192.168.29.72:8000/api/v1/';
   static const String stagingBaseUrl = 'https://api-staging.learningapp.local';
-  static const String prodBaseUrl = 'https://api.gloriousartcreations.com';
+  static const String prodBaseUrl = 'https://api.gloriousartcreations.com/api/v1/';
 
   static String get baseUrl {
     switch (env) {

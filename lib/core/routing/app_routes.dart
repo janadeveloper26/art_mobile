@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:art_mobile/features/onboarding/onboarding_screen.dart';
 import 'package:art_mobile/features/splash/splash_screen.dart';
 import 'package:art_mobile/features/auth/presentation/pages/login_page.dart';
+import 'package:art_mobile/features/auth/presentation/pages/sign_up_page.dart';
 import 'package:art_mobile/features/auth/presentation/pages/verify_otp_page.dart';
 import 'package:art_mobile/features/auth/presentation/pages/device_pending_approval_page.dart';
 import 'package:art_mobile/features/courses/presentation/pages/courses_page.dart';
@@ -19,6 +20,7 @@ class AppRoutes {
   static const String onboarding = '/onboarding';
   static const String skillSelection = '/skill-selection';
   static const String login = '/login';
+  static const String signUp = '/sign-up';
   static const String verifyOtp = '/verify-otp';
   static const String home = '/home';
   static const String courses = '/courses';
@@ -40,6 +42,8 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => LoginPage()); // Placeholder for now
       case login:
         return MaterialPageRoute(builder: (_) => LoginPage());
+      case signUp:
+        return MaterialPageRoute(builder: (_) => const SignUpPage());
       case verifyOtp:
         final args = settings.arguments as Map<String, dynamic>?;
         return MaterialPageRoute(

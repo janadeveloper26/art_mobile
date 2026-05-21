@@ -53,8 +53,6 @@ class FirebaseAuthService {
           phoneNumber,
           RecaptchaVerifier(
             auth: FirebaseAuthPlatform.instance,
-            container: 'recaptcha-container',
-            size: RecaptchaVerifierSize.normal,
           ),
         );
         codeSent(result.verificationId, null);
