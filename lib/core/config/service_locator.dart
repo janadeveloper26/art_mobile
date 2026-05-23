@@ -5,8 +5,11 @@ import 'package:art_mobile/core/network/interceptors/auth_interceptor.dart';
 import 'package:art_mobile/core/network/interceptors/error_interceptor.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:art_mobile/core/storage/secure_storage_service.dart';
+import 'package:art_mobile/core/network/interceptors/retry_interceptor.dart';
 import 'package:art_mobile/core/theme/theme_manager.dart';
 import 'package:art_mobile/core/services/device_service.dart';
+import 'package:art_mobile/core/services/fcm_service.dart';
 
 // Features
 import 'package:art_mobile/features/auth/domain/repositories/auth_repository.dart';
@@ -28,6 +31,8 @@ Future<void> setupServiceLocator() async {
   // External - FlutterSecureStorage
   const secureStorage = FlutterSecureStorage();
   sl.registerSingleton<FlutterSecureStorage>(secureStorage);
+  
+  sl.registerSingleton<SecureStorageService>(SecureStorageService(secureStorage));
 
   // Theme Manager
   sl.registerSingleton<ThemeManager>(ThemeManager(sharedPreferences));
@@ -42,8 +47,9 @@ Future<void> setupServiceLocator() async {
 
   // Services
   final firebaseAuthService = FirebaseAuthService();
-  await firebaseAuthService.initialize();
   sl.registerLazySingleton<FirebaseAuthService>(() => firebaseAuthService);
+  
+  sl.registerLazySingleton<FcmService>(() => FcmService(sl<SecureStorageService>()));
 
   // Repositories
   sl.registerLazySingleton<IAuthRemoteDataSource>(
@@ -52,8 +58,10 @@ Future<void> setupServiceLocator() async {
 
   sl.registerLazySingleton<IAuthRepository>(
     () => AuthRepositoryImpl(
-      apiClient: sl<ApiClient>(),
       remoteDataSource: sl<IAuthRemoteDataSource>(),
+      firebaseAuthService: sl<FirebaseAuthService>(),
+      deviceService: sl<DeviceService>(),
+      secureStorageService: sl<SecureStorageService>(),
     ),
   );
   
@@ -72,7 +80,8 @@ void _setupNetworkLayer() {
 
   // Interceptors
   dio.interceptors.addAll([
-    AuthInterceptor(sl<FlutterSecureStorage>()),
+    AuthInterceptor(secureStorage: sl<SecureStorageService>(), dio: dio),
+    RetryInterceptor(dio: dio),
     ErrorInterceptor(),
   ]);
 

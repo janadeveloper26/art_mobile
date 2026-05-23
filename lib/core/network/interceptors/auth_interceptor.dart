@@ -1,19 +1,18 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:art_mobile/core/constants/app_constants.dart';
+import 'package:art_mobile/core/storage/secure_storage_service.dart';
 
-class AuthInterceptor extends QueuedInterceptor {
-  final FlutterSecureStorage secureStorage;
+class AuthInterceptor extends Interceptor {
+  final Dio dio;
+  final SecureStorageService secureStorage;
 
-  AuthInterceptor(this.secureStorage);
+  AuthInterceptor({required this.secureStorage, required this.dio});
 
   @override
   Future<void> onRequest(
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    // Retrieve token from secure storage
-    final token = await secureStorage.read(key: AppConstants.accessTokenKey);
+    final token = await secureStorage.getAccessToken();
 
     if (token != null && token.isNotEmpty) {
       options.headers['Authorization'] = 'Bearer $token';

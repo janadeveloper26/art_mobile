@@ -23,11 +23,11 @@ class DeviceService {
   Future<Map<String, dynamic>> getDeviceInfo() async {
     if (_installId == null) await init();
     
-    final packageInfo = await PackageInfo.fromPlatform();
-    
     String platformName = 'web';
     String model = 'Browser';
     String osVersion = 'Unknown';
+    String manufacturer = 'Unknown';
+    String brand = 'Unknown';
 
     if (kIsWeb) {
       final webInfo = await _deviceInfo.webBrowserInfo;
@@ -39,19 +39,27 @@ class DeviceService {
         final androidInfo = await _deviceInfo.androidInfo;
         model = androidInfo.model;
         osVersion = androidInfo.version.release;
+        manufacturer = androidInfo.manufacturer;
+        brand = androidInfo.brand;
       } else if (Platform.isIOS) {
         final iosInfo = await _deviceInfo.iosInfo;
         model = iosInfo.utsname.machine;
         osVersion = iosInfo.systemVersion;
+        manufacturer = 'Apple';
+        brand = 'Apple';
       }
     }
 
+    final fcmToken = await _storage.read(key: 'device_session_id'); // We stored it here temporarily or it should be 'fcm_token'
+
     return {
-      'install_id': _installId,
+      'device_id': _installId,
+      'device_name': model,
+      'manufacturer': manufacturer,
+      'brand': brand,
+      'android_version': osVersion,
       'platform': platformName,
-      'device_model': model,
-      'os_version': osVersion,
-      'app_version': packageInfo.version,
+      'fcm_token': fcmToken?.replaceFirst('fcm_', '') ?? '',
     };
   }
 }

@@ -114,30 +114,33 @@ class UserData {
 }
 
 class DeviceMetadata {
-  final String installId;
+  final String deviceId;
+  final String deviceName;
+  final String manufacturer;
+  final String brand;
+  final String androidVersion;
   final String platform;
-  final String? deviceModel;
-  final String? osVersion;
-  final String? fcmToken;
-  final String? appVersion;
+  final String fcmToken;
 
   DeviceMetadata({
-    required this.installId,
+    required this.deviceId,
+    required this.deviceName,
+    required this.manufacturer,
+    required this.brand,
+    required this.androidVersion,
     required this.platform,
-    this.deviceModel,
-    this.osVersion,
-    this.fcmToken,
-    this.appVersion,
+    required this.fcmToken,
   });
 
   Map<String, dynamic> toJson() {
     return {
-      'install_id': installId,
+      'device_id': deviceId,
+      'device_name': deviceName,
+      'manufacturer': manufacturer,
+      'brand': brand,
+      'android_version': androidVersion,
       'platform': platform,
-      'device_model': deviceModel,
-      'os_version': osVersion,
       'fcm_token': fcmToken,
-      'app_version': appVersion,
     };
   }
 }

@@ -4,6 +4,7 @@ import 'package:art_mobile/app.dart';
 import 'package:art_mobile/core/config/service_locator.dart';
 import 'package:art_mobile/core/services/security_service.dart';
 import 'package:art_mobile/core/services/notification_service.dart';
+import 'package:art_mobile/core/services/fcm_service.dart';
 import 'package:art_mobile/firebase_options.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -15,23 +16,34 @@ void main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    
-    debugPrint('Firebase initialized successfully');
+
+    final googleSignIn = GoogleSignIn.instance;
+
+    await googleSignIn.initialize();
+
+    if (!kIsWeb) {
+      await googleSignIn.attemptLightweightAuthentication();
+    }
+
+    debugPrint('Firebase initialized');
   } catch (e) {
-    debugPrint('CRITICAL: Firebase initialization failed: $e');
-    debugPrint('If running on Web, ensure you have configured Firebase correctly.');
+    debugPrint('Firebase init failed: $e');
   }
 
   try {
     await NotificationService().init();
   } catch (e) {
-    debugPrint('NotificationService initialization failed: $e');
+    debugPrint('Notification init failed: $e');
   }
 
-  // Initialize core services
   await setupServiceLocator();
-  
-  // Initialize Security measures
+
+  try {
+    await sl<FcmService>().init();
+  } catch (e) {
+    debugPrint('FCM init failed: $e');
+  }
+
   await SecurityService().init();
 
   runApp(const LearningApp());

@@ -3,11 +3,16 @@ import 'package:art_mobile/core/errors/failures.dart';
 import 'package:art_mobile/features/auth/data/models/auth_models.dart';
 
 abstract class IAuthRepository {
-  Future<Either<Failure, OtpData>> requestOtp(String phone);
-  Future<Either<Failure, AuthData>> verifyOtp({
-    required String idToken,
-    String? name,
-    required DeviceMetadata device,
+  Future<Either<Failure, void>> sendOtp({
+    required String phoneNumber,
+    required Function(String verificationId) onCodeSent,
   });
-  Future<Either<Failure, AuthData>> firebaseLogin(String idToken, DeviceMetadata device);
+  
+  Future<Either<Failure, AuthData>> verifyOtp({
+    required String verificationId,
+    required String otp,
+    String? name,
+  });
+  
+  Future<Either<Failure, AuthData>> signInWithGoogle();
 }

@@ -1,23 +1,24 @@
 enum Environment { development, staging, production }
 
 class EnvironmentConfig {
-  static const Environment env = Environment.production;
+  static const String envString =
+      String.fromEnvironment('ENV', defaultValue: 'development');
 
-  // API Base URLs
-  static const String devBaseUrl = 'http://192.168.29.72:8000/api/v1/';
-  static const String stagingBaseUrl = 'https://api-staging.learningapp.local';
-  static const String prodBaseUrl = 'https://api.gloriousartcreations.com/api/v1/';
-
-  static String get baseUrl {
-    switch (env) {
-      case Environment.development:
-        return devBaseUrl;
-      case Environment.staging:
-        return stagingBaseUrl;
-      case Environment.production:
-        return prodBaseUrl;
+  static Environment get env {
+    switch (envString) {
+      case 'development':
+        return Environment.development;
+      case 'staging':
+        return Environment.staging;
+      default:
+        return Environment.production;
     }
   }
+
+  // API Base URLs
+  static const String baseUrl = String.fromEnvironment('BASE_URL',
+      // defaultValue: 'https://api.gloriousartcreations.com/api/v1/',
+      defaultValue: 'http://127.0.0.1:8000/api/v1/');
 
   // Timeouts
   static const Duration connectTimeout = Duration(seconds: 30);
