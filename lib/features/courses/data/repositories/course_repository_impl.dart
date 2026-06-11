@@ -14,9 +14,11 @@ class CourseRepositoryImpl implements ICourseRepository {
   Future<CourseDetail> getCourseDetail(String courseId) async {
     try {
       final response = await apiClient.get('courses/$courseId');
-      // In a real app, you'd use a fromJson constructor
-      // For now, mapping logic would go here
-      throw UnimplementedError('Real API mapping not yet implemented for CourseDetail');
+      if (response.data != null && response.data['data'] != null) {
+        return CourseDetail.fromJson(response.data['data'] as Map<String, dynamic>);
+      } else {
+        throw Exception('Invalid API response format for CourseDetail');
+      }
     } catch (e) {
       rethrow;
     }
@@ -40,15 +42,30 @@ class CourseRepositoryImpl implements ICourseRepository {
   Future<ExploreResponse> getExploreData({String? query, String? category, String? filter}) async {
     try {
       final response = await apiClient.get(
-        'courses/explore',
+        'courses',
         queryParameters: {
-          if (query != null) 'query': query,
-          if (category != null) 'category': category,
-          if (filter != null) 'filter': filter,
+          if (query != null && query.trim().isNotEmpty) 'query': query.trim(),
+          if (category != null && category != 'All') 'category': category,
+          if (filter != null && filter != 'All') 'filter': filter,
         },
       );
-      // Mapping logic...
-      throw UnimplementedError('Real API mapping not yet implemented for ExploreResponse');
+
+      final responseData = response.data;
+      if (responseData is List<dynamic>) {
+        return ExploreResponse.fromList(responseData);
+      }
+      if (responseData is Map<String, dynamic>) {
+        final data = responseData['data'];
+        if (data is List<dynamic>) {
+          return ExploreResponse.fromList(data);
+        }
+        if (data is Map<String, dynamic>) {
+          return ExploreResponse.fromJson(data);
+        }
+        return ExploreResponse.fromJson(responseData);
+      }
+
+      throw Exception('Invalid API response format for ExploreResponse');
     } catch (e) {
       rethrow;
     }
@@ -58,8 +75,11 @@ class CourseRepositoryImpl implements ICourseRepository {
   Future<MyCoursesResponse> getMyCourses() async {
     try {
       final response = await apiClient.get('courses/my-courses');
-      // Mapping logic...
-      throw UnimplementedError('Real API mapping not yet implemented for MyCoursesResponse');
+      if (response.data != null && response.data['data'] != null) {
+        return MyCoursesResponse.fromJson(response.data['data'] as Map<String, dynamic>);
+      } else {
+        throw Exception('Invalid API response format for MyCoursesResponse');
+      }
     } catch (e) {
       rethrow;
     }

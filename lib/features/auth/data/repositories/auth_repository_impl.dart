@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:art_mobile/core/errors/failures.dart';
 import 'package:art_mobile/features/auth/data/models/auth_models.dart';
@@ -28,12 +29,22 @@ class AuthRepositoryImpl implements IAuthRepository {
     required Function(String verificationId) onCodeSent,
   }) async {
     try {
-      debugPrint('🔑 Requesting OTP via Firebase for $phoneNumber');
+      debugPrint('🔑 Requesting OTP via backend for $phoneNumber');
+      final otpData = await remoteDataSource.requestOtp(phoneNumber);
+      if (!otpData.canProceed) {
+        return const Left(ServerFailure(message: 'Cannot proceed with OTP request.'));
+      }
+
       await firebaseAuthService.sendOtp(
         phoneNumber: phoneNumber,
         onCodeSent: onCodeSent,
       );
+
       return const Right(null);
+    } on FirebaseException catch (e) {
+      return Left(ServerFailure(message: e.message ?? 'Failed to send OTP via Firebase.'));
+    } on DioException catch (e) {
+      return Left(_handleDioError(e));
     } catch (e) {
       return Left(UnexpectedFailure(message: e.toString()));
     }
@@ -46,13 +57,13 @@ class AuthRepositoryImpl implements IAuthRepository {
     String? name,
   }) async {
     try {
-      debugPrint('🔑 Verifying OTP via Firebase');
+      debugPrint('🔑 Verifying OTP via backend');
       final idToken = await firebaseAuthService.verifyOtp(
         verificationId: verificationId,
         otp: otp,
       );
 
-      return await _processDjangoAuth(idToken, isGoogle: false, name: name);
+      return await _processDjangoOtpAuth(idToken, name: name);
     } catch (e) {
       return Left(UnexpectedFailure(message: e.toString()));
     }
@@ -70,26 +81,42 @@ class AuthRepositoryImpl implements IAuthRepository {
     }
   }
 
+  Future<Either<Failure, AuthData>> _processDjangoOtpAuth(
+    String idToken, {
+    String? name,
+  }) async {
+    try {
+      final device = await _buildDeviceMetadata();
+      final request = OtpVerifyRequest(
+        idToken: idToken,
+        name: name,
+        device: device,
+      );
+      final result = await remoteDataSource.verifyOtp(request);
+
+      await secureStorageService.saveTokens(
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
+      );
+
+      return Right(result);
+    } on DioException catch (e) {
+      return Left(_handleDioError(e));
+    } catch (e) {
+      return Left(UnexpectedFailure(message: e.toString()));
+    }
+  }
+
   Future<Either<Failure, AuthData>> _processDjangoAuth(String idToken, {required bool isGoogle, String? name}) async {
     try {
-      final deviceInfoMap = await deviceService.getDeviceInfo();
-      final device = DeviceMetadata(
-        deviceId: deviceInfoMap['device_id'],
-        deviceName: deviceInfoMap['device_name'],
-        manufacturer: deviceInfoMap['manufacturer'],
-        brand: deviceInfoMap['brand'],
-        androidVersion: deviceInfoMap['android_version'],
-        platform: deviceInfoMap['platform'],
-        fcmToken: deviceInfoMap['fcm_token'],
-      );
+      final device = await _buildDeviceMetadata();
 
       AuthData result;
       if (isGoogle) {
         final request = FirebaseLoginRequest(idToken: idToken, device: device);
         result = await remoteDataSource.firebaseLogin(request);
       } else {
-        final request = OtpVerifyRequest(idToken: idToken, name: name, device: device);
-        result = await remoteDataSource.verifyOtp(request);
+        throw UnsupportedError('OTP auth must use sendOtp and verifyOtp.');
       }
 
       await secureStorageService.saveTokens(
@@ -103,6 +130,19 @@ class AuthRepositoryImpl implements IAuthRepository {
     } catch (e) {
       return Left(UnexpectedFailure(message: e.toString()));
     }
+  }
+
+  Future<DeviceMetadata> _buildDeviceMetadata() async {
+    final deviceInfoMap = await deviceService.getDeviceInfo();
+    return DeviceMetadata(
+      deviceId: deviceInfoMap['device_id'],
+      deviceName: deviceInfoMap['device_name'],
+      manufacturer: deviceInfoMap['manufacturer'],
+      brand: deviceInfoMap['brand'],
+      androidVersion: deviceInfoMap['android_version'],
+      platform: deviceInfoMap['platform'],
+      fcmToken: deviceInfoMap['fcm_token'],
+    );
   }
 
   Failure _handleDioError(DioException e) {

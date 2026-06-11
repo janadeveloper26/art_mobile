@@ -16,14 +16,25 @@ class EnvironmentConfig {
   }
 
   // API Base URLs
-  static const String baseUrl = String.fromEnvironment('BASE_URL',
-      // defaultValue: 'https://api.gloriousartcreations.com/api/v1/',
-      defaultValue: 'http://127.0.0.1:8000/api/v1/');
+  // For Android emulator, use 10.0.2.2 to reach the host machine.
+  // For a real device, override BASE_URL with your PC's LAN IP, e.g. http://192.168.1.10:8000/api/v1/.
+  static const String baseUrl = String.fromEnvironment(
+    'BASE_URL',
+    defaultValue: 'http://192.168.29.72:8000/api/v1/',
+  );
 
   // Timeouts
-  static const Duration connectTimeout = Duration(seconds: 30);
-  static const Duration receiveTimeout = Duration(seconds: 30);
+  static const Duration connectTimeout = Duration(seconds: 60);
+  static const Duration receiveTimeout = Duration(seconds: 60);
   static const Duration sendTimeout = Duration(seconds: 30);
+
+  // CloudFront CDN — set CLOUDFRONT_URL via --dart-define in your run config.
+  // Example: https://d1234example.cloudfront.net
+  // Leave empty to use full URLs already stored in lesson.videoUrl.
+  static const String cloudFrontBaseUrl = String.fromEnvironment(
+    'CLOUDFRONT_URL',
+    defaultValue: '',
+  );
 
   // Video Streaming
   static const int videoBufferDuration = 5; // seconds

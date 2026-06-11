@@ -64,6 +64,7 @@ class AppRoutes {
         final args = settings.arguments as Map<String, dynamic>?;
         return MaterialPageRoute(
           builder: (_) => VideoPlayerPage(
+            courseId: args?['courseId'] ?? '1',
             videoId: args?['videoId'] ?? '0',
             videoUrl: args?['videoUrl'],
           ),

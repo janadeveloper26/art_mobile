@@ -8,7 +8,11 @@ class ErrorInterceptor extends QueuedInterceptor {
   void onError(DioException err, ErrorInterceptorHandler handler) {
     String message = _getErrorMessage(err);
 
-    logger.e('API Error: ${err.response?.statusCode} - $message');
+    logger.e(
+      'API Error: ${err.response?.statusCode} - $message'
+      '\nURL: ${err.requestOptions.path}'
+      '\nResponse body: ${err.response?.data}',
+    );
 
     return handler.next(err);
   }

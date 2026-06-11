@@ -15,6 +15,7 @@ class CourseDetail {
   final int price;
   final int originalPrice;
   final String image;
+  final String videoUrl;
   final bool isWishlisted;
   final List<CurriculumSection> curriculum;
   final List<CourseReview> reviewsList;
@@ -36,10 +37,82 @@ class CourseDetail {
     required this.price,
     required this.originalPrice,
     required this.image,
+    this.videoUrl = '',
     this.isWishlisted = false,
     required this.curriculum,
     required this.reviewsList,
   });
+
+  factory CourseDetail.fromJson(Map<String, dynamic> json) {
+    final curriculumJson = _listFromAny(json['curriculum'] ?? json['sections'] ?? json['modules'] ?? json['lessons']);
+    final reviewsJson = _listFromAny(json['reviews_list'] ?? json['reviews'] ?? json['testimonials']);
+    return CourseDetail(
+      id: _stringFromAny(json['id']),
+      title: json['title'] as String? ?? '',
+      description: json['description'] as String? ?? '',
+      instructor: json['instructor'] as String? ?? '',
+      instructorAvatar: json['instructor_avatar'] as String? ?? '',
+      instructorRole: json['instructor_role'] as String? ?? '',
+      level: json['level'] as String? ?? '',
+      category: json['category'] as String? ?? '',
+      duration: json['duration'] as String? ?? '',
+      lessonCount: (json['lesson_count'] as num?)?.toInt() ?? 0,
+      rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
+      reviews: (json['reviews'] as num?)?.toInt() ?? 0,
+      students: (json['students'] as num?)?.toInt() ?? 0,
+      price: (json['price'] as num?)?.toInt() ?? 0,
+      originalPrice: (json['original_price'] as num?)?.toInt() ?? 0,
+      image: json['image'] as String? ?? '',
+      videoUrl: _stringFromAny(
+        json['video_url'] ??
+            json['video'] ??
+            json['s3_video_url'] ??
+            json['video_file'] ??
+            json['preview_video_url'] ??
+            json['trailer_url'] ??
+            json['promo_video_url'],
+      ),
+      isWishlisted: json['is_wishlisted'] as bool? ?? false,
+      curriculum: curriculumJson.map(_mapFromAny).whereType<Map<String, dynamic>>().map(CurriculumSection.fromJson).toList(),
+      reviewsList: reviewsJson.map(_mapFromAny).whereType<Map<String, dynamic>>().map(CourseReview.fromJson).toList(),
+    );
+  }
+}
+
+String _stringFromAny(dynamic value) {
+  if (value == null) return '';
+  if (value is String) return value;
+  if (value is Map<String, dynamic>) {
+    return _stringFromAny(
+      value['url'] ??
+          value['video_url'] ??
+          value['s3_url'] ??
+          value['file'] ??
+          value['key'],
+    );
+  }
+  return value.toString();
+}
+
+List<dynamic> _listFromAny(dynamic value) {
+  if (value is List<dynamic>) return value;
+  if (value is Map<String, dynamic>) {
+    return _listFromAny(
+      value['curriculum'] ??
+          value['sections'] ??
+          value['modules'] ??
+          value['lessons'] ??
+          value['reviews_list'] ??
+          value['reviews'],
+    );
+  }
+  return const [];
+}
+
+Map<String, dynamic>? _mapFromAny(dynamic value) {
+  if (value is Map<String, dynamic>) return value;
+  if (value is Map) return Map<String, dynamic>.from(value);
+  return null;
 }
 
 class CurriculumSection {
@@ -52,6 +125,17 @@ class CurriculumSection {
     required this.title,
     required this.lessons,
   });
+
+  factory CurriculumSection.fromJson(Map<String, dynamic> json) {
+    return CurriculumSection(
+      id: _stringFromAny(json['id']),
+      title: json['title'] as String? ?? '',
+      lessons: (json['lessons'] as List<dynamic>?)
+              ?.map((e) => CourseLesson.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+    );
+  }
 }
 
 class CourseLesson {
@@ -70,6 +154,17 @@ class CourseLesson {
     this.isCompleted = false,
     this.isPreview = false,
   });
+
+  factory CourseLesson.fromJson(Map<String, dynamic> json) {
+    return CourseLesson(
+      id: _stringFromAny(json['id']),
+      title: json['title'] as String? ?? '',
+      duration: json['duration'] as String? ?? '',
+      videoUrl: _stringFromAny(json['video_url'] ?? json['video'] ?? json['s3_video_url'] ?? json['video_file']),
+      isCompleted: json['is_completed'] as bool? ?? false,
+      isPreview: json['is_preview'] as bool? ?? false,
+    );
+  }
 }
 
 class CourseReview {
@@ -88,6 +183,17 @@ class CourseReview {
     required this.comment,
     required this.date,
   });
+
+  factory CourseReview.fromJson(Map<String, dynamic> json) {
+    return CourseReview(
+      id: _stringFromAny(json['id']),
+      name: json['name'] as String? ?? '',
+      avatar: json['avatar'] as String? ?? '',
+      rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
+      comment: json['comment'] as String? ?? '',
+      date: json['date'] as String? ?? '',
+    );
+  }
 }
 
 class HomeResponse {
@@ -187,7 +293,7 @@ class CourseSummary {
 
   factory CourseSummary.fromJson(Map<String, dynamic> json) {
     return CourseSummary(
-      id: json['id'] as String? ?? '',
+      id: _stringFromAny(json['id']),
       title: json['title'] as String? ?? '',
       instructor: json['instructor'] as String? ?? 'Unknown',
       category: json['category'] as String? ?? 'Uncategorized',

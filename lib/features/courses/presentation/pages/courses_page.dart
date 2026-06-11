@@ -399,7 +399,7 @@ class _ExploreViewState extends State<ExploreView> with TickerProviderStateMixin
                   Container(
                     decoration: BoxDecoration(
                       borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                      image: DecorationImage(image: AssetImage(course.image), fit: BoxFit.cover),
+                      image: DecorationImage(image: _courseImageProvider(course.image), fit: BoxFit.cover),
                     ),
                   ),
                   if (course.discount != null)
@@ -515,5 +515,13 @@ class _ExploreViewState extends State<ExploreView> with TickerProviderStateMixin
         ),
       ),
     );
+  }
+
+  ImageProvider _courseImageProvider(String image) {
+    if (image.startsWith('http')) {
+      return NetworkImage(image);
+    }
+
+    return AssetImage(image.isNotEmpty ? image : 'assets/images/aari_hero.png');
   }
 }

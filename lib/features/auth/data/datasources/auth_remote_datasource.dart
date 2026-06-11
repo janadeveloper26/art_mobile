@@ -16,15 +16,15 @@ class AuthRemoteDataSourceImpl implements IAuthRemoteDataSource {
   @override
   Future<OtpData> requestOtp(String phone) async {
     final response = await apiClient.post(
-      'auth/otp/request',
+      'auth/send-otp',
       data: {'phone': phone},
     );
 
-    if (response.data != null && response.data['success'] == true) {
+    if (_isSuccess(response.data)) {
       return OtpData.fromJson(response.data['data']);
     } else {
       throw DioException(
-        requestOptions: RequestOptions(path: 'auth/otp/request'),
+        requestOptions: RequestOptions(path: 'auth/send-otp'),
         response: response,
         type: DioExceptionType.badResponse,
       );
@@ -38,7 +38,7 @@ class AuthRemoteDataSourceImpl implements IAuthRemoteDataSource {
       data: request.toJson(),
     );
 
-    if (response.data != null && response.data['success'] == true) {
+    if (_isSuccess(response.data)) {
       return AuthData.fromJson(response.data['data']);
     } else {
       throw DioException(
@@ -56,7 +56,7 @@ class AuthRemoteDataSourceImpl implements IAuthRemoteDataSource {
       data: request.toJson(),
     );
     
-    if (response.data != null && response.data['success'] == true) {
+    if (_isSuccess(response.data)) {
       return AuthData.fromJson(response.data['data']);
     } else {
       throw DioException(
@@ -65,5 +65,10 @@ class AuthRemoteDataSourceImpl implements IAuthRemoteDataSource {
         type: DioExceptionType.badResponse,
       );
     }
+  }
+
+  bool _isSuccess(dynamic data) {
+    if (data is! Map<String, dynamic>) return false;
+    return data['success'] == true || data['status'] == 'success';
   }
 }

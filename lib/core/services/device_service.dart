@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:uuid/uuid.dart';
 import 'dart:io' show Platform;
 
@@ -50,7 +50,7 @@ class DeviceService {
       }
     }
 
-    final fcmToken = await _storage.read(key: 'device_session_id'); // We stored it here temporarily or it should be 'fcm_token'
+    final fcmToken = await FirebaseMessaging.instance.getToken();
 
     return {
       'device_id': _installId,
@@ -59,7 +59,7 @@ class DeviceService {
       'brand': brand,
       'android_version': osVersion,
       'platform': platformName,
-      'fcm_token': fcmToken?.replaceFirst('fcm_', '') ?? '',
+      'fcm_token': fcmToken ?? '',
     };
   }
 }

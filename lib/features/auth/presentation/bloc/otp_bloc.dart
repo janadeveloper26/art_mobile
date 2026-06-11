@@ -78,7 +78,7 @@ class OtpState extends Equatable {
 // BLOC
 class OtpBloc extends Bloc<OtpEvent, OtpState> {
   final String phoneNumber;
-  final String verificationId;
+  String verificationId; // mutable so resend can update it
   final IAuthRepository _authRepository = sl<IAuthRepository>();
   Timer? _timer;
 
@@ -133,13 +133,12 @@ class OtpBloc extends Bloc<OtpEvent, OtpState> {
   Future<void> _onResendOtp(ResendOtpPressed event, Emitter<OtpState> emit) async {
     emit(state.copyWith(resendTimer: 30, errorMessage: null));
     add(StartResendTimer());
-    
-    // We call sendOtp from repository but we might need a way to update verificationId in state.
-    // For simplicity, we assume the same verificationId works or a new one is handled separately.
+
     await _authRepository.sendOtp(
       phoneNumber: phoneNumber,
       onCodeSent: (newVerificationId) {
-        // If we want to handle new verificationId we would need a state update.
+        // Update verificationId so the next verify call uses the fresh OTP session.
+        verificationId = newVerificationId;
       },
     );
   }

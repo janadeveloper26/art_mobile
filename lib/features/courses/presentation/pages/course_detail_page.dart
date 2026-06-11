@@ -134,13 +134,29 @@ class _CourseDetailViewState extends State<CourseDetailView> with TickerProvider
   }
 
   Widget _buildVideoHeader(BuildContext context, CourseDetailLoaded state) {
+    CourseLesson? previewLesson;
+    for (final section in state.course.curriculum) {
+      for (final lesson in section.lessons) {
+        if (lesson.videoUrl.isNotEmpty) {
+          previewLesson = lesson;
+          break;
+        }
+      }
+      if (previewLesson != null) break;
+    }
+
+    final videoUrl = previewLesson?.videoUrl ?? state.course.videoUrl;
+    final videoId = previewLesson?.id ?? state.course.id;
+
     return Container(
       height: 260,
       width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.black,
         image: DecorationImage(
-          image: AssetImage(state.course.image),
+          image: state.course.image.startsWith('http')
+              ? NetworkImage(state.course.image)
+              : AssetImage(state.course.image) as ImageProvider,
           fit: BoxFit.cover,
           opacity: 0.7,
         ),
@@ -170,11 +186,17 @@ class _CourseDetailViewState extends State<CourseDetailView> with TickerProvider
           ),
           Center(
             child: GestureDetector(
-              onTap: () => Navigator.pushNamed(
-                context, 
-                AppRoutes.videoPlayer,
-                arguments: {'videoId': state.course.id, 'videoUrl': 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'}
-              ),
+              onTap: videoUrl.isEmpty
+                  ? null
+                  : () => Navigator.pushNamed(
+                        context,
+                        AppRoutes.videoPlayer,
+                        arguments: {
+                          'courseId': state.course.id,
+                          'videoId': videoId,
+                          'videoUrl': videoUrl,
+                        },
+                      ),
               child: Container(
                 width: 64,
                 height: 64,

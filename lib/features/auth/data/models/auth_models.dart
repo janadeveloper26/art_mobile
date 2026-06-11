@@ -120,7 +120,7 @@ class DeviceMetadata {
   final String brand;
   final String androidVersion;
   final String platform;
-  final String fcmToken;
+  final String? fcmToken;
 
   DeviceMetadata({
     required this.deviceId,
@@ -129,7 +129,7 @@ class DeviceMetadata {
     required this.brand,
     required this.androidVersion,
     required this.platform,
-    required this.fcmToken,
+    this.fcmToken,
   });
 
   Map<String, dynamic> toJson() {
@@ -140,7 +140,7 @@ class DeviceMetadata {
       'brand': brand,
       'android_version': androidVersion,
       'platform': platform,
-      'fcm_token': fcmToken,
+      if (fcmToken != null && fcmToken!.isNotEmpty) 'fcm_token': fcmToken,
     };
   }
 }
@@ -156,7 +156,7 @@ class FirebaseLoginRequest {
 
   Map<String, dynamic> toJson() {
     return {
-      'id_token': idToken,
+      'firebase_token': idToken,
       'device': device.toJson(),
     };
   }
@@ -176,7 +176,7 @@ class OtpVerifyRequest {
   Map<String, dynamic> toJson() {
     return {
       'id_token': idToken,
-      'name': name,
+      if (name != null) 'name': name,
       'device': device.toJson(),
     };
   }

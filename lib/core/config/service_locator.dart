@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 import 'package:get_it/get_it.dart';
 import 'package:art_mobile/core/network/api_client.dart';
 import 'package:art_mobile/core/network/interceptors/auth_interceptor.dart';
@@ -20,6 +22,7 @@ import 'package:art_mobile/features/courses/data/mock_course_service.dart'; // S
 import 'package:art_mobile/features/courses/data/repositories/course_repository_impl.dart';
 import 'package:art_mobile/features/subscription/data/mock_subscription_repository.dart'; // Still needed for interface
 import 'package:art_mobile/features/subscription/data/repositories/subscription_repository_impl.dart';
+import 'package:art_mobile/features/video_player/data/s3_video_service.dart';
 
 final sl = GetIt.instance;
 
@@ -68,15 +71,27 @@ Future<void> setupServiceLocator() async {
   sl.registerLazySingleton<ICourseRepository>(
     () => CourseRepositoryImpl(apiClient: sl<ApiClient>()),
   );
-  
+
   sl.registerLazySingleton<ISubscriptionRepository>(
     () => SubscriptionRepositoryImpl(apiClient: sl<ApiClient>()),
   );
+
+  // Video Player — S3/CloudFront URL resolver (no API calls)
+  sl.registerLazySingleton<S3VideoService>(() => const S3VideoService());
 }
 
 void _setupNetworkLayer() {
   // Dio
   final dio = Dio();
+  
+  // Bypass SSL certificate validation for development backend
+  dio.httpClientAdapter = IOHttpClientAdapter(
+    createHttpClient: () {
+      final client = HttpClient();
+      client.badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+      return client;
+    },
+  );
 
   // Interceptors
   dio.interceptors.addAll([

@@ -28,9 +28,12 @@ class LoginPage extends StatelessWidget {
             );
           }
           if (state.isOtpSent) {
+            final fullPhoneNumber = state.phoneNumber.startsWith('+')
+                ? state.phoneNumber
+                : '+91${state.phoneNumber}';
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('OTP sent to +91 ${state.phoneNumber}'),
+                content: Text('OTP sent to $fullPhoneNumber'),
                 backgroundColor: Colors.green,
                 behavior: SnackBarBehavior.floating,
               ),
@@ -39,7 +42,7 @@ class LoginPage extends StatelessWidget {
               context, 
               AppRoutes.verifyOtp,
               arguments: {
-                'phoneNumber': '+91 ${state.phoneNumber}',
+                'phoneNumber': fullPhoneNumber,
                 'verificationId': state.verificationId,
               },
             );

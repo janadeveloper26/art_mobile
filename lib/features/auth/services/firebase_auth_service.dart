@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -14,7 +15,7 @@ class FirebaseAuthService {
     try {
       final GoogleSignInAccount googleUser = await _googleSignIn.authenticate();
 
-      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
 
       final credential = GoogleAuthProvider.credential(
         idToken: googleAuth.idToken,
@@ -40,19 +41,31 @@ class FirebaseAuthService {
     required String phoneNumber,
     required Function(String verificationId) onCodeSent,
   }) async {
+    final completer = Completer<void>();
+
     await _firebaseAuth.verifyPhoneNumber(
       phoneNumber: phoneNumber,
       verificationCompleted: (credential) async {
-        await _firebaseAuth.signInWithCredential(credential);
+        try {
+          await _firebaseAuth.signInWithCredential(credential);
+          if (!completer.isCompleted) completer.complete();
+        } catch (e) {
+          if (!completer.isCompleted) completer.completeError(Exception(e.toString()));
+        }
       },
       verificationFailed: (e) {
-        throw Exception(e.message);
+        if (!completer.isCompleted) completer.completeError(Exception(e.message));
       },
       codeSent: (verificationId, resendToken) {
         onCodeSent(verificationId);
+        if (!completer.isCompleted) completer.complete();
       },
-      codeAutoRetrievalTimeout: (_) {},
+      codeAutoRetrievalTimeout: (verificationId) {
+        if (!completer.isCompleted) completer.complete();
+      },
     );
+
+    return completer.future;
   }
 
   Future<String> verifyOtp({
