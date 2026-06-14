@@ -10,6 +10,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:art_mobile/core/storage/secure_storage_service.dart';
 import 'package:art_mobile/core/network/interceptors/retry_interceptor.dart';
 import 'package:art_mobile/core/theme/theme_manager.dart';
+import 'package:art_mobile/core/config/environment.dart';
 import 'package:art_mobile/core/services/device_service.dart';
 import 'package:art_mobile/core/services/fcm_service.dart';
 
@@ -23,6 +24,7 @@ import 'package:art_mobile/features/courses/data/repositories/course_repository_
 import 'package:art_mobile/features/subscription/data/mock_subscription_repository.dart'; // Still needed for interface
 import 'package:art_mobile/features/subscription/data/repositories/subscription_repository_impl.dart';
 import 'package:art_mobile/features/video_player/data/s3_video_service.dart';
+import 'package:art_mobile/features/payment/services/razorpay_service.dart';
 
 final sl = GetIt.instance;
 
@@ -76,8 +78,15 @@ Future<void> setupServiceLocator() async {
     () => SubscriptionRepositoryImpl(apiClient: sl<ApiClient>()),
   );
 
-  // Video Player — S3/CloudFront URL resolver (no API calls)
-  sl.registerLazySingleton<S3VideoService>(() => const S3VideoService());
+  // Video Player — Production S3/CloudFront URL service
+  sl.registerLazySingleton<S3VideoService>(
+      () => S3VideoService(
+    apiClient: sl<ApiClient>(),
+    cloudFrontBaseUrl: EnvironmentConfig.cloudFrontBaseUrl,
+  ));
+
+  // Payment
+  sl.registerFactory<RazorpayService>(() => RazorpayService());
 }
 
 void _setupNetworkLayer() {

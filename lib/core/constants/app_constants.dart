@@ -4,7 +4,7 @@ class AppConstants {
   static const String signupEndpoint = '/auth/signup';
   static const String logoutEndpoint = '/auth/logout';
   static const String refreshTokenEndpoint = '/auth/refresh-token';
-  static const String profileEndpoint = '/users/profile';
+  static const String profileEndpoint = '/profile';
   static const String coursesEndpoint = '/courses';
   static const String videosEndpoint = '/videos';
   static const String enrollmentsEndpoint = '/enrollments';
@@ -21,6 +21,7 @@ class AppConstants {
   static const String accessTokenKey = 'access_token';
   static const String refreshTokenKey = 'refresh_token';
   static const String userIdKey = 'user_id';
+  static const String userDataKey = 'user_data';
 
   // UI Constants
   static const int itemsPerPage = 10;

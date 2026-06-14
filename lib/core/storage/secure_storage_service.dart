@@ -31,4 +31,24 @@ class SecureStorageService {
   Future<String?> getDeviceSessionId() async {
     return await _storage.read(key: 'device_session_id');
   }
+
+  /// Persist the logged-in user's JSON so the profile page can load it offline.
+  Future<void> saveUserData(String userJson) async {
+    await _storage.write(key: AppConstants.userDataKey, value: userJson);
+  }
+
+  Future<String?> getUserData() async {
+    return await _storage.read(key: AppConstants.userDataKey);
+  }
+
+  Future<void> clearUserData() async {
+    await _storage.delete(key: AppConstants.userDataKey);
+  }
+
+  /// Clear everything on sign-out.
+  Future<void> clearAll() async {
+    await clearTokens();
+    await clearUserData();
+    await _storage.delete(key: 'device_session_id');
+  }
 }

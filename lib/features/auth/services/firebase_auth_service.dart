@@ -15,7 +15,8 @@ class FirebaseAuthService {
     try {
       final GoogleSignInAccount googleUser = await _googleSignIn.authenticate();
 
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
 
       final credential = GoogleAuthProvider.credential(
         idToken: googleAuth.idToken,
@@ -46,15 +47,22 @@ class FirebaseAuthService {
     await _firebaseAuth.verifyPhoneNumber(
       phoneNumber: phoneNumber,
       verificationCompleted: (credential) async {
+        // If Android auto-verifies, it doesn't send an SMS.
+        // We sign in with the credential so Firebase is authenticated.
         try {
           await _firebaseAuth.signInWithCredential(credential);
           if (!completer.isCompleted) completer.complete();
+          // We MUST call onCodeSent with the verificationId so LoginBloc moves to the OTP screen,
+          // otherwise the app hangs on 'loading'. We pass the smsCode if available so they can see it or we auto-submit.
+          onCodeSent(credential.verificationId ?? 'auto-verified');
         } catch (e) {
-          if (!completer.isCompleted) completer.completeError(Exception(e.toString()));
+          if (!completer.isCompleted)
+            completer.completeError(Exception(e.toString()));
         }
       },
       verificationFailed: (e) {
-        if (!completer.isCompleted) completer.completeError(Exception(e.message));
+        if (!completer.isCompleted)
+          completer.completeError(Exception(e.message));
       },
       codeSent: (verificationId, resendToken) {
         onCodeSent(verificationId);

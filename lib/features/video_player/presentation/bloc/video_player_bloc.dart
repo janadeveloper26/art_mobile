@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:video_player/video_player.dart';
 import 'package:art_mobile/features/video_player/data/s3_video_service.dart';
@@ -19,6 +21,7 @@ class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
     on<VideoEndedEvent>(_onVideoEnded);
     on<VideoErrorOccurred>(_onVideoError);
     on<DisposePlayer>(_onDisposePlayer);
+    on<RetryVideo>(_onRetryVideo);
   }
 
   // ─── Handlers ──────────────────────────────────────────────────────────────
@@ -28,27 +31,28 @@ class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
     await _disposeController();
     emit(VideoPlayerLoading(lessonTitle: event.lessonTitle));
 
-    final uri = _s3VideoService.resolveVideoUri(event.videoUrl);
+    final uri = await _s3VideoService.resolveVideoUri(event.videoUrl);
     if (!_s3VideoService.isValidUri(uri)) {
       emit(const VideoPlayerError(
-        message: 'Video URL is invalid or could not be resolved.\n'
-            'Check your CloudFront / S3 configuration.',
+        message: 'Unable to load this video.\n'
+            'The video URL could not be resolved. Try again later.',
       ));
       return;
     }
 
     try {
-      final controller = VideoPlayerController.networkUrl(
-        uri,
-        // Add signed-cookie or auth headers here if using CloudFront signed URLs.
-        httpHeaders: const {},
-      );
+      debugPrint('▶️ Video URL: $uri');
+      final controller = VideoPlayerController.networkUrl(uri);
       _controller = controller;
-      await controller.initialize();
 
-      // Attach listener AFTER initialise — only watches for completion & errors.
+      await controller.initialize().timeout(
+        const Duration(seconds: 20),
+        onTimeout: () => throw TimeoutException(
+          'Video load timed out. Check your internet connection.',
+        ),
+      );
+
       controller.addListener(_onControllerUpdate);
-
       await controller.play();
 
       if (!isClosed) {
@@ -58,8 +62,18 @@ class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
           duration: controller.value.duration,
         ));
       }
+    } on TimeoutException catch (e) {
+      emit(VideoPlayerError(message: e.message ?? 'Video load timed out.'));
     } catch (e) {
-      emit(VideoPlayerError(message: 'Failed to load video: $e'));
+      final msg = e.toString();
+      if (msg.contains('403') || msg.contains('401')) {
+        emit(const VideoPlayerError(
+          message: 'Video access denied (403).\n'
+              'The URL may have expired. Tap Retry to refresh.',
+        ));
+      } else {
+        emit(VideoPlayerError(message: 'Failed to load video.\n$msg'));
+      }
     }
   }
 
@@ -176,6 +190,14 @@ class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
         add(const VideoEndedEvent());
       }
     }
+  }
+
+  Future<void> _onRetryVideo(
+      RetryVideo event, Emitter<VideoPlayerState> emit) async {
+    await _onLoadVideo(
+      LoadVideo(videoUrl: event.videoUrl, lessonTitle: event.lessonTitle),
+      emit,
+    );
   }
 
   // ─── Helpers ────────────────────────────────────────────────────────────────

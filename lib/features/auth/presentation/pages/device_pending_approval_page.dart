@@ -2,9 +2,62 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:lottie/lottie.dart';
+import 'package:art_mobile/core/config/service_locator.dart';
+import 'package:art_mobile/features/auth/domain/repositories/auth_repository.dart';
+import 'package:art_mobile/core/routing/app_routes.dart';
 
-class DevicePendingApprovalPage extends StatelessWidget {
+class DevicePendingApprovalPage extends StatefulWidget {
   const DevicePendingApprovalPage({super.key});
+
+  @override
+  State<DevicePendingApprovalPage> createState() => _DevicePendingApprovalPageState();
+}
+
+class _DevicePendingApprovalPageState extends State<DevicePendingApprovalPage> {
+  bool _isLoading = false;
+
+  Future<void> _checkStatus() async {
+    setState(() => _isLoading = true);
+    
+    final repo = sl<IAuthRepository>();
+    final result = await repo.checkApprovalStatus();
+    
+    if (!mounted) return;
+    
+    setState(() => _isLoading = false);
+    
+    result.fold(
+      (failure) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(failure.message),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      },
+      (isApproved) {
+        if (isApproved) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Device Approved!'),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          Navigator.pushNamedAndRemoveUntil(context, AppRoutes.home, (route) => false);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Still pending administrator approval.'),
+              backgroundColor: Colors.orange,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -82,10 +135,7 @@ class DevicePendingApprovalPage extends StatelessWidget {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: () {
-                    // Re-login attempt or status check
-                    Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
-                  },
+                  onPressed: _isLoading ? null : _checkStatus,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF6A1B9A),
                     foregroundColor: Colors.white,
@@ -94,20 +144,26 @@ class DevicePendingApprovalPage extends StatelessWidget {
                     ),
                     elevation: 0,
                   ),
-                  child: Text(
-                    'Check Status',
-                    style: GoogleFonts.outfit(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        )
+                      : Text(
+                          'Check Status',
+                          style: GoogleFonts.outfit(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ),
               
               const SizedBox(height: 20),
               
               TextButton(
-                onPressed: () => Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false),
+                onPressed: () => Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (route) => false),
                 child: Text(
                   'Back to Login',
                   style: GoogleFonts.outfit(
@@ -135,7 +191,7 @@ class RoundedRectangleWithBorder extends OutlinedBorder {
 
   @override
   Path getInnerPath(Rect rect, {TextDirection? textDirection}) {
-    return Path()..addRRect(borderRadius.resolve(textDirection).toRRect(rect).deflate(side.width));
+    return Path()..addRRect(borderRadius.resolve(textDirection).toRRect(rect).deflate(side?.width ?? 0));
   }
 
   @override
@@ -146,9 +202,11 @@ class RoundedRectangleWithBorder extends OutlinedBorder {
   @override
   void paint(Canvas canvas, Rect rect, {TextDirection? textDirection}) {
     if (rect.isEmpty) return;
-    final paint = side.toPaint();
-    final rrect = borderRadius.resolve(textDirection).toRRect(rect);
-    canvas.drawRRect(rrect, paint);
+    if (side != null && side!.style != BorderStyle.none) {
+      final paint = side!.toPaint();
+      final rrect = borderRadius.resolve(textDirection).toRRect(rect);
+      canvas.drawRRect(rrect, paint);
+    }
   }
 
   @override

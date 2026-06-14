@@ -40,6 +40,7 @@ class AppBottomNav extends StatelessWidget {
                 _buildNavItem(1, LucideIcons.compass, "Explore", isDark),
                 _buildNavItem(2, LucideIcons.bookOpen, "My Courses", isDark),
                 _buildNavItem(3, LucideIcons.user, "Profile", isDark),
+                _buildNavItem(4, LucideIcons.shoppingBag, "Supply", isDark),
               ],
             ),
           ),

@@ -18,8 +18,12 @@ class SplashScreen extends StatelessWidget {
       child: BlocListener<SplashBloc, SplashState>(
         listener: (context, state) {
           if (state is SplashCompleted) {
-            // Navigate to welcome screen after the 2800ms sequence
-            Navigator.pushReplacementNamed(context, AppRoutes.welcome);
+            // Navigate to home or welcome screen after the 2800ms sequence
+            if (state.isLoggedIn) {
+              Navigator.pushReplacementNamed(context, AppRoutes.home);
+            } else {
+              Navigator.pushReplacementNamed(context, AppRoutes.welcome);
+            }
           }
         },
         child: const SplashView(),

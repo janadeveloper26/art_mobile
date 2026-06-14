@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:art_mobile/core/config/service_locator.dart';
 import 'package:art_mobile/core/routing/app_routes.dart';
+import 'package:art_mobile/core/storage/secure_storage_service.dart';
 import 'package:art_mobile/core/theme/theme_colors.dart';
 import 'package:art_mobile/core/theme/theme_manager.dart';
+import 'package:art_mobile/features/auth/data/models/auth_models.dart';
+import 'package:art_mobile/features/payment/services/razorpay_service.dart';
 import '../../data/models/course_model.dart';
 import '../../data/mock_course_service.dart';
 import '../bloc/course_detail/course_detail_bloc.dart';
@@ -35,6 +39,8 @@ class _CourseDetailViewState extends State<CourseDetailView> with TickerProvider
   late ScrollController _scrollController;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  late RazorpayService _razorpayService;
+  bool _enrollLoading = false;
 
   @override
   void initState() {
@@ -48,13 +54,98 @@ class _CourseDetailViewState extends State<CourseDetailView> with TickerProvider
       CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
     );
     _animationController.forward();
+
+    // Setup Razorpay
+    _razorpayService = sl<RazorpayService>();
+    _razorpayService.onSuccess = _handlePaymentSuccess;
+    _razorpayService.onFailure = _handlePaymentFailure;
+    _razorpayService.onExternalWallet = _handleExternalWallet;
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
     _animationController.dispose();
+    _razorpayService.dispose();
     super.dispose();
+  }
+
+  // ─── Razorpay callbacks ───────────────────────────────────────────────────
+
+  void _handlePaymentSuccess(PaymentSuccessResponse response) {
+    setState(() => _enrollLoading = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: const Color(0xFF10B981),
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle_rounded, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Payment successful! Payment ID: ${response.paymentId}',
+                style: GoogleFonts.outfit(color: Colors.white, fontSize: 13),
+              ),
+            ),
+          ],
+        ),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
+  void _handlePaymentFailure(PaymentFailureResponse response) {
+    setState(() => _enrollLoading = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: const Color(0xFFEF4444),
+        content: Row(
+          children: [
+            const Icon(Icons.error_rounded, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                response.message ?? 'Payment failed. Please try again.',
+                style: GoogleFonts.outfit(color: Colors.white, fontSize: 13),
+              ),
+            ),
+          ],
+        ),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
+  void _handleExternalWallet(ExternalWalletResponse response) {
+    setState(() => _enrollLoading = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('External wallet selected: ${response.walletName}',
+            style: GoogleFonts.outfit(color: Colors.white, fontSize: 13)),
+        backgroundColor: const Color(0xFF6A1B9A),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
+  Future<void> _startEnrollment(CourseDetail course) async {
+    setState(() => _enrollLoading = true);
+    try {
+      final userDataJson = await sl<SecureStorageService>().getUserData();
+      final userData = UserData.fromJsonString(userDataJson);
+      _razorpayService.openCheckout(
+        amountInRupees: course.price.toDouble(),
+        courseName: course.title,
+        userPhone: userData?.phone ?? '',
+        userEmail: userData?.email,
+        userId: userData?.id,
+      );
+    } catch (e) {
+      setState(() => _enrollLoading = false);
+    }
   }
 
   @override
@@ -502,16 +593,29 @@ class _CourseDetailViewState extends State<CourseDetailView> with TickerProvider
               ),
               if (isExpanded)
                 Column(
-                  children: section.lessons.map((lesson) => Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(border: Border(top: BorderSide(color: isDark ? Colors.white10 : Colors.grey.shade100))),
-                    child: Row(
-                      children: [
-                        Icon(lesson.isCompleted ? LucideIcons.checkCircle2 : LucideIcons.playCircle, color: const Color(0xFF6A1B9A), size: 18),
-                        const SizedBox(width: 12),
-                        Expanded(child: Text(lesson.title, style: GoogleFonts.outfit(fontSize: 14, color: isDark ? Colors.grey.shade300 : const Color(0xFF1A1A1A)))),
-                        Text(lesson.duration, style: GoogleFonts.outfit(fontSize: 12, color: Colors.grey.shade500)),
-                      ],
+                  children: section.lessons.map((lesson) => GestureDetector(
+                    onTap: lesson.videoUrl.isEmpty
+                        ? null
+                        : () => Navigator.pushNamed(
+                              context,
+                              AppRoutes.videoPlayer,
+                              arguments: {
+                                'courseId': state.course.id,
+                                'videoId': lesson.id,
+                                'videoUrl': lesson.videoUrl,
+                              },
+                            ),
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(border: Border(top: BorderSide(color: isDark ? Colors.white10 : Colors.grey.shade100))),
+                      child: Row(
+                        children: [
+                          Icon(lesson.isCompleted ? LucideIcons.checkCircle2 : LucideIcons.playCircle, color: const Color(0xFF6A1B9A), size: 18),
+                          const SizedBox(width: 12),
+                          Expanded(child: Text(lesson.title, style: GoogleFonts.outfit(fontSize: 14, color: isDark ? Colors.grey.shade300 : const Color(0xFF1A1A1A)))),
+                          Text(lesson.duration, style: GoogleFonts.outfit(fontSize: 12, color: Colors.grey.shade500)),
+                        ],
+                      ),
                     ),
                   )).toList(),
                 ),
@@ -608,9 +712,25 @@ class _CourseDetailViewState extends State<CourseDetailView> with TickerProvider
             const SizedBox(width: 24),
             Expanded(
               child: ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF6A1B9A), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 18), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)), elevation: 0),
-                child: Text('ENROLL NOW', style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                onPressed: _enrollLoading ? null : () => _startEnrollment(course),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF6A1B9A),
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: const Color(0xFF6A1B9A).withOpacity(0.6),
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  elevation: 0,
+                ),
+                child: _enrollLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2.5,
+                        ),
+                      )
+                    : Text('ENROLL NOW', style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 1)),
               ),
             ),
           ],

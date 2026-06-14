@@ -5,7 +5,8 @@ import 'package:art_mobile/features/my_courses/data/models/my_courses_model.dart
 abstract class ICourseRepository {
   Future<CourseDetail> getCourseDetail(String courseId);
   Future<HomeResponse> getHomeData();
-  Future<ExploreResponse> getExploreData({String? query, String? category, String? filter});
+  Future<ExploreResponse> getExploreData(
+      {String? query, String? category, String? filter});
   Future<MyCoursesResponse> getMyCourses();
 }
 
@@ -16,7 +17,8 @@ class MockCourseRepository implements ICourseRepository {
     return CourseDetail(
       id: courseId,
       title: 'Aari Embroidery Masterclass',
-      description: 'Master the ancient art of Aari embroidery with this comprehensive masterclass. We cover everything from setting up your frame to executing complex bridal designs with precision. You will learn the signature "Atelier Flow" that ensures consistent tension and speed.',
+      description:
+          'Master the ancient art of Aari embroidery with this comprehensive masterclass. We cover everything from setting up your frame to executing complex bridal designs with precision. You will learn the signature "Atelier Flow" that ensures consistent tension and speed.',
       instructor: 'Priya Sharma',
       instructorAvatar: 'assets/images/profile_avatar.png',
       instructorRole: 'Expert Instructor · 5 years exp',
@@ -36,18 +38,51 @@ class MockCourseRepository implements ICourseRepository {
           id: 's1',
           title: 'Section 1: Introduction & Basics',
           lessons: [
-            CourseLesson(id: 'l1', title: 'Welcome to the Masterclass', duration: '05:00', videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', isPreview: true, isCompleted: true),
-            CourseLesson(id: 'l2', title: 'Essential Tools & Materials', duration: '12:45', videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', isCompleted: true),
-            CourseLesson(id: 'l3', title: 'Setting up your Embroidery Frame', duration: '15:30', videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'),
+            CourseLesson(
+                id: 'l1',
+                title: 'Welcome to the Masterclass',
+                duration: '05:00',
+                videoUrl:
+                    'https://d3aj7czvezt6jf.cloudfront.net/videos/35c08323-15ac-4eba-8efd-c37741ededad.mp4',
+                isPreview: true,
+                isCompleted: true),
+            CourseLesson(
+                id: 'l2',
+                title: 'Essential Tools & Materials',
+                duration: '12:45',
+                videoUrl:
+                    'https://d3aj7czvezt6jf.cloudfront.net/videos/35c08323-15ac-4eba-8efd-c37741ededad.mp4',
+                isCompleted: true),
+            CourseLesson(
+                id: 'l3',
+                title: 'Setting up your Embroidery Frame',
+                duration: '15:30',
+                videoUrl:
+                    'https://d3aj7czvezt6jf.cloudfront.net/videos/35c08323-15ac-4eba-8efd-c37741ededad.mp4'),
           ],
         ),
         CurriculumSection(
           id: 's2',
           title: 'Section 2: Hook Techniques',
           lessons: [
-            CourseLesson(id: 'l4', title: 'Holding the Aari Hook', duration: '10:15', videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'),
-            CourseLesson(id: 'l5', title: 'The Basic Chain Stitch', duration: '20:45', videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'),
-            CourseLesson(id: 'l6', title: 'Turning Curves & Corners', duration: '18:20', videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'),
+            CourseLesson(
+                id: 'l4',
+                title: 'Holding the Aari Hook',
+                duration: '10:15',
+                videoUrl:
+                    'https://d3aj7czvezt6jf.cloudfront.net/videos/35c08323-15ac-4eba-8efd-c37741ededad.mp4'),
+            CourseLesson(
+                id: 'l5',
+                title: 'The Basic Chain Stitch',
+                duration: '20:45',
+                videoUrl:
+                    'https://d3aj7czvezt6jf.cloudfront.net/videos/35c08323-15ac-4eba-8efd-c37741ededad.mp4'),
+            CourseLesson(
+                id: 'l6',
+                title: 'Turning Curves & Corners',
+                duration: '18:20',
+                videoUrl:
+                    'https://d3aj7czvezt6jf.cloudfront.net/videos/35c08323-15ac-4eba-8efd-c37741ededad.mp4'),
           ],
         ),
       ],
@@ -57,7 +92,8 @@ class MockCourseRepository implements ICourseRepository {
           name: 'Anjali Gupta',
           avatar: 'A',
           rating: 5,
-          comment: 'This course is amazing! The instructions are so clear and easy to follow. I already started making my own designs.',
+          comment:
+              'This course is amazing! The instructions are so clear and easy to follow. I already started making my own designs.',
           date: '2 days ago',
         ),
         CourseReview(
@@ -65,7 +101,8 @@ class MockCourseRepository implements ICourseRepository {
           name: 'Rekha Singh',
           avatar: 'R',
           rating: 4,
-          comment: 'Very detailed and professional. Only wish there were more advanced motifs included.',
+          comment:
+              'Very detailed and professional. Only wish there were more advanced motifs included.',
           date: '1 week ago',
         ),
       ],
@@ -148,19 +185,25 @@ class MockCourseRepository implements ICourseRepository {
         ),
       ],
       instructors: [
-        InstructorSummary(name: 'Priya S.', initial: 'P', colors: [0xFF6A1B9A, 0xFFAB47BC]),
-        InstructorSummary(name: 'Meena L.', initial: 'M', colors: [0xFF4527A0, 0xFF7E57C2]),
-        InstructorSummary(name: 'Kavitha R.', initial: 'K', colors: [0xFF880E4F, 0xFFAD1457]),
-        InstructorSummary(name: 'Sudha M.', initial: 'S', colors: [0xFF1565C0, 0xFF42A5F5]),
-        InstructorSummary(name: 'Anita K.', initial: 'A', colors: [0xFF2E7D32, 0xFF66BB6A]),
+        InstructorSummary(
+            name: 'Priya S.', initial: 'P', colors: [0xFF6A1B9A, 0xFFAB47BC]),
+        InstructorSummary(
+            name: 'Meena L.', initial: 'M', colors: [0xFF4527A0, 0xFF7E57C2]),
+        InstructorSummary(
+            name: 'Kavitha R.', initial: 'K', colors: [0xFF880E4F, 0xFFAD1457]),
+        InstructorSummary(
+            name: 'Sudha M.', initial: 'S', colors: [0xFF1565C0, 0xFF42A5F5]),
+        InstructorSummary(
+            name: 'Anita K.', initial: 'A', colors: [0xFF2E7D32, 0xFF66BB6A]),
       ],
     );
   }
 
   @override
-  Future<ExploreResponse> getExploreData({String? query, String? category, String? filter}) async {
+  Future<ExploreResponse> getExploreData(
+      {String? query, String? category, String? filter}) async {
     await Future.delayed(const Duration(milliseconds: 600));
-    
+
     List<CourseSummary> allCourses = [
       CourseSummary(
         id: '1',
@@ -214,23 +257,33 @@ class MockCourseRepository implements ICourseRepository {
 
     // Simple filtering logic
     var filtered = allCourses.where((c) {
-      final matchesQuery = query == null || c.title.toLowerCase().contains(query.toLowerCase());
-      final matchesCategory = category == null || category == 'All' || c.category == category;
-      final matchesFilter = filter == null || filter == 'All' || c.level == filter;
+      final matchesQuery =
+          query == null || c.title.toLowerCase().contains(query.toLowerCase());
+      final matchesCategory =
+          category == null || category == 'All' || c.category == category;
+      final matchesFilter =
+          filter == null || filter == 'All' || c.level == filter;
       return matchesQuery && matchesCategory && matchesFilter;
     }).toList();
 
     return ExploreResponse(
       courses: filtered,
       categories: ['All', 'Aari', 'Tailoring', 'Embroidery', 'Blouse Design'],
-      filters: ['All', 'Beginner', 'Intermediate', 'Advanced', 'Popular', 'Paid'],
+      filters: [
+        'All',
+        'Beginner',
+        'Intermediate',
+        'Advanced',
+        'Popular',
+        'Paid'
+      ],
     );
   }
 
   @override
   Future<MyCoursesResponse> getMyCourses() async {
     await Future.delayed(const Duration(milliseconds: 700));
-    
+
     final ongoing = [
       CourseSummary(
         id: '1',

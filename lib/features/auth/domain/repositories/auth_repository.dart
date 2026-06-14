@@ -15,4 +15,10 @@ abstract class IAuthRepository {
   });
   
   Future<Either<Failure, AuthData>> signInWithGoogle();
+  
+  Future<Either<Failure, bool>> checkApprovalStatus();
+
+  Future<Either<Failure, UserData>> getProfile();
+
+  Future<Either<Failure, UserData>> updateProfile({String? name, String? email});
 }

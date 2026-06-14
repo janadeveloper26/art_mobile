@@ -12,6 +12,7 @@ import '../../core/theme/theme_colors.dart';
 import '../../core/routing/app_routes.dart';
 import '../courses/data/models/course_model.dart';
 import '../courses/data/mock_course_service.dart';
+import 'package:art_mobile/features/supply/presentation/pages/supply_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -100,6 +101,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               const CoursesPage(),   // EXPLORE
               const MyCoursesPage(),  // MY COURSES
               const ProfilePage(),   // PROFILE
+              const SupplyPage(),    // SUPPLY
             ],
           ),
           bottomNavigationBar: AppBottomNav(
@@ -449,17 +451,23 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   Widget _buildContinueCard(CourseSummary course, bool isDark) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isDark ? ThemeColors.surfaceDark : Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: isDark ? ThemeColors.borderDark : Colors.grey.shade100),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+    return GestureDetector(
+      onTap: () => Navigator.pushNamed(
+        context,
+        AppRoutes.courseDetail,
+        arguments: {'courseId': course.id},
       ),
-      child: Row(
-        children: [
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isDark ? ThemeColors.surfaceDark : Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: isDark ? ThemeColors.borderDark : Colors.grey.shade100),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+        ),
+        child: Row(
+          children: [
           Stack(
             alignment: Alignment.center,
             children: [
@@ -514,8 +522,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildFeaturedCourses(bool isDark) {
     final courses = _homeData!.featuredCourses;
@@ -546,17 +555,23 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             itemCount: courses.length,
             itemBuilder: (context, index) {
               final course = courses[index];
-              return Container(
-                width: 220,
-                margin: const EdgeInsets.only(right: 16),
-                decoration: BoxDecoration(
-                  color: isDark ? ThemeColors.surfaceDark : Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: isDark ? ThemeColors.borderDark : Colors.grey.shade100),
+              return GestureDetector(
+                onTap: () => Navigator.pushNamed(
+                  context,
+                  AppRoutes.courseDetail,
+                  arguments: {'courseId': course.id},
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+                child: Container(
+                  width: 220,
+                  margin: const EdgeInsets.only(right: 16),
+                  decoration: BoxDecoration(
+                    color: isDark ? ThemeColors.surfaceDark : Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: isDark ? ThemeColors.borderDark : Colors.grey.shade100),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                     Stack(
                       children: [
                         Container(
@@ -596,8 +611,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                     ),
                   ],
                 ),
-              );
-            },
+              ),
+            );
+          },
           ),
         ),
       ],

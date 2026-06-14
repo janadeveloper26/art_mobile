@@ -13,6 +13,7 @@ import 'package:art_mobile/features/video_player/presentation/pages/video_player
 import 'package:art_mobile/features/subscription/presentation/pages/subscription_page.dart';
 import 'package:art_mobile/features/courses/presentation/pages/course_detail_page.dart';
 import 'package:art_mobile/features/welcome/presentation/pages/welcome_screen.dart';
+import 'package:art_mobile/features/supply/presentation/pages/supply_page.dart';
 
 class AppRoutes {
   static const String splash = '/';
@@ -29,6 +30,7 @@ class AppRoutes {
   static const String subscription = '/subscription';
   static const String courseDetail = '/course-detail';
   static const String devicePendingApproval = '/device-pending-approval';
+  static const String supply = '/supply';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -55,7 +57,7 @@ class AppRoutes {
       case devicePendingApproval:
         return MaterialPageRoute(builder: (_) => const DevicePendingApprovalPage());
       case home:
-        return MaterialPageRoute(builder: (_) => HomePage());
+        return MaterialPageRoute(builder: (_) => const HomePage());
       case courses:
         return MaterialPageRoute(builder: (_) => const CoursesPage());
       case notifications:
@@ -78,6 +80,8 @@ class AppRoutes {
             courseId: args?['courseId'] ?? '1',
           ),
         );
+      case supply:
+        return MaterialPageRoute(builder: (_) => const SupplyPage());
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(

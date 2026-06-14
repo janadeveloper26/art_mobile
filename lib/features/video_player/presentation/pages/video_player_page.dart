@@ -68,6 +68,7 @@ class _VideoPlayerViewState extends State<_VideoPlayerView>
   bool _courseLoading = true;
   String? _courseError;
   CourseLesson? _currentLesson;
+  String _currentVideoUrl = '';
 
   @override
   void initState() {
@@ -124,7 +125,10 @@ class _VideoPlayerViewState extends State<_VideoPlayerView>
     final url = (widget.overrideUrl?.isNotEmpty == true)
         ? widget.overrideUrl!
         : lesson.videoUrl;
-    setState(() => _currentLesson = lesson);
+    setState(() {
+      _currentLesson = lesson;
+      _currentVideoUrl = url;
+    });
     context
         .read<VideoPlayerBloc>()
         .add(LoadVideo(videoUrl: url, lessonTitle: lesson.title));
@@ -175,7 +179,11 @@ class _VideoPlayerViewState extends State<_VideoPlayerView>
       appBar: _appBar(isDark),
       body: Column(
         children: [
-          _VideoArea(isDark: isDark),
+          _VideoArea(
+            isDark: isDark,
+            retryUrl: _currentVideoUrl.isNotEmpty ? _currentVideoUrl : null,
+            retryTitle: _currentLesson?.title,
+          ),
           Expanded(
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
@@ -236,7 +244,13 @@ class _VideoPlayerViewState extends State<_VideoPlayerView>
 
 class _VideoArea extends StatelessWidget {
   final bool isDark;
-  const _VideoArea({required this.isDark});
+  final String? retryUrl;
+  final String? retryTitle;
+  const _VideoArea({
+    required this.isDark,
+    this.retryUrl,
+    this.retryTitle,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -253,12 +267,21 @@ class _VideoArea extends StatelessWidget {
               return _LoadingOverlay(lessonTitle: state.lessonTitle);
             }
             if (state is VideoPlayerError) {
-              return _ErrorOverlay(message: state.message);
+              return _ErrorOverlay(
+                message: state.message,
+                onRetry: (retryUrl != null && retryTitle != null)
+                    ? () => context.read<VideoPlayerBloc>().add(
+                          RetryVideo(
+                            videoUrl: retryUrl!,
+                            lessonTitle: retryTitle!,
+                          ),
+                        )
+                    : null,
+              );
             }
             if (state is VideoPlayerReady) {
               return _ActivePlayer(readyState: state);
             }
-            // Fallback (should never reach)
             return const _BlankPlaceholder();
           },
         ),
@@ -642,7 +665,8 @@ class _LoadingOverlay extends StatelessWidget {
 
 class _ErrorOverlay extends StatelessWidget {
   final String message;
-  const _ErrorOverlay({required this.message});
+  final VoidCallback? onRetry;
+  const _ErrorOverlay({required this.message, this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -670,6 +694,37 @@ class _ErrorOverlay extends StatelessWidget {
                   color: Colors.white38, fontSize: 11),
               textAlign: TextAlign.center,
             ),
+            if (onRetry != null) ...[
+              const SizedBox(height: 20),
+              GestureDetector(
+                onTap: onRetry,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 24, vertical: 10),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.25)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.refresh_rounded,
+                          color: Colors.white70, size: 16),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Retry',
+                        style: GoogleFonts.outfit(
+                          color: Colors.white70,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),

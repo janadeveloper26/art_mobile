@@ -98,6 +98,7 @@ class AuthRepositoryImpl implements IAuthRepository {
         accessToken: result.accessToken,
         refreshToken: result.refreshToken,
       );
+      await secureStorageService.saveUserData(result.user.toJsonString());
 
       return Right(result);
     } on DioException catch (e) {
@@ -123,6 +124,7 @@ class AuthRepositoryImpl implements IAuthRepository {
         accessToken: result.accessToken,
         refreshToken: result.refreshToken,
       );
+      await secureStorageService.saveUserData(result.user.toJsonString());
 
       return Right(result);
     } on DioException catch (e) {
@@ -143,6 +145,45 @@ class AuthRepositoryImpl implements IAuthRepository {
       platform: deviceInfoMap['platform'],
       fcmToken: deviceInfoMap['fcm_token'],
     );
+  }
+
+  @override
+  Future<Either<Failure, bool>> checkApprovalStatus() async {
+    try {
+      debugPrint('🔑 Checking approval status via backend');
+      final isApproved = await remoteDataSource.checkApprovalStatus();
+      return Right(isApproved);
+    } on DioException catch (e) {
+      return Left(_handleDioError(e));
+    } catch (e) {
+      return Left(UnexpectedFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, UserData>> getProfile() async {
+    try {
+      final user = await remoteDataSource.getProfile();
+      await secureStorageService.saveUserData(user.toJsonString());
+      return Right(user);
+    } on DioException catch (e) {
+      return Left(_handleDioError(e));
+    } catch (e) {
+      return Left(UnexpectedFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, UserData>> updateProfile({String? name, String? email}) async {
+    try {
+      final user = await remoteDataSource.updateProfile(name: name, email: email);
+      await secureStorageService.saveUserData(user.toJsonString());
+      return Right(user);
+    } on DioException catch (e) {
+      return Left(_handleDioError(e));
+    } catch (e) {
+      return Left(UnexpectedFailure(message: e.toString()));
+    }
   }
 
   Failure _handleDioError(DioException e) {

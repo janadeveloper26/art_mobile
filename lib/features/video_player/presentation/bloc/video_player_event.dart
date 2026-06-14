@@ -63,3 +63,14 @@ class VideoErrorOccurred extends VideoPlayerEvent {
 class DisposePlayer extends VideoPlayerEvent {
   const DisposePlayer();
 }
+
+/// Retry loading the last video URL after an error.
+class RetryVideo extends VideoPlayerEvent {
+  final String videoUrl;
+  final String lessonTitle;
+
+  const RetryVideo({required this.videoUrl, required this.lessonTitle});
+
+  @override
+  List<Object?> get props => [videoUrl, lessonTitle];
+}

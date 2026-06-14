@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class OtpRequestResponse {
   final String status;
   final String message;
@@ -110,6 +112,29 @@ class UserData {
       role: json['role'] as String,
       isVerified: json['is_verified'] as bool,
     );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    if (name != null) 'name': name,
+    if (email != null) 'email': email,
+    'phone': phone,
+    if (avatar != null) 'avatar': avatar,
+    'role': role,
+    'is_verified': isVerified,
+  };
+
+  /// Serialise to a JSON string for SecureStorage.
+  String toJsonString() => jsonEncode(toJson());
+
+  /// Deserialise from the JSON string stored in SecureStorage.
+  static UserData? fromJsonString(String? jsonStr) {
+    if (jsonStr == null || jsonStr.isEmpty) return null;
+    try {
+      return UserData.fromJson(jsonDecode(jsonStr) as Map<String, dynamic>);
+    } catch (_) {
+      return null;
+    }
   }
 }
 
