@@ -42,7 +42,7 @@ class CourseRepositoryImpl implements ICourseRepository {
   Future<ExploreResponse> getExploreData({String? query, String? category, String? filter}) async {
     try {
       final response = await apiClient.get(
-        'courses',
+        'courses/explore',
         queryParameters: {
           if (query != null && query.trim().isNotEmpty) 'query': query.trim(),
           if (category != null && category != 'All') 'category': category,

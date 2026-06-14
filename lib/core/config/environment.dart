@@ -20,7 +20,7 @@ class EnvironmentConfig {
   // For a real device, override BASE_URL with your PC's LAN IP, e.g. http://192.168.1.10:8000/api/v1/.
   static const String baseUrl = String.fromEnvironment(
     'BASE_URL',
-    defaultValue: 'http://192.168.29.72:8000/api/v1/',
+    defaultValue: 'https://api.gloriousartcreations.com/api/v1/',
   );
 
   // Timeouts
@@ -33,7 +33,7 @@ class EnvironmentConfig {
   // Leave empty to use full URLs already stored in lesson.videoUrl.
   static const String cloudFrontBaseUrl = String.fromEnvironment(
     'CLOUDFRONT_URL',
-    defaultValue: '',
+    defaultValue: 'https://d3aj7czvezt6jf.cloudfront.net',
   );
 
   // Video Streaming

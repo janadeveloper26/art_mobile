@@ -63,6 +63,9 @@ class ApiClient {
       return response;
     } on DioException catch (e) {
       debugPrint('❌ [POST] FAILED $path | Error: ${e.message}');
+      if (e.response != null) {
+        debugPrint('❌ [POST] FAILED Response Body: ${e.response?.data}');
+      }
       rethrow;
     }
   }

@@ -4,7 +4,7 @@ class AppConstants {
   static const String signupEndpoint = '/auth/signup';
   static const String logoutEndpoint = '/auth/logout';
   static const String refreshTokenEndpoint = '/auth/refresh-token';
-  static const String profileEndpoint = '/profile';
+  static const String profileEndpoint = '/users/profile';
   static const String coursesEndpoint = '/courses';
   static const String videosEndpoint = '/videos';
   static const String enrollmentsEndpoint = '/enrollments';

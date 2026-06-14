@@ -5,6 +5,7 @@ import 'package:dio/io.dart';
 import 'package:flutter/foundation.dart';
 import 'package:art_mobile/core/storage/secure_storage_service.dart';
 import 'package:art_mobile/core/constants/app_constants.dart';
+import 'package:art_mobile/core/config/environment.dart';
 
 class AuthInterceptor extends Interceptor {
   final Dio dio;
@@ -12,7 +13,7 @@ class AuthInterceptor extends Interceptor {
   late final Dio _refreshDio;
 
   AuthInterceptor({required this.secureStorage, required this.dio}) {
-    _refreshDio = Dio(BaseOptions(baseUrl: dio.options.baseUrl));
+    _refreshDio = Dio(BaseOptions(baseUrl: EnvironmentConfig.baseUrl));
     _refreshDio.interceptors.clear();
     _refreshDio.httpClientAdapter = IOHttpClientAdapter(
       createHttpClient: () {

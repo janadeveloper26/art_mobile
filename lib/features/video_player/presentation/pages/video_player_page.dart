@@ -524,9 +524,10 @@ class _CompletedOverlay extends StatelessWidget {
     return Container(
       color: Colors.black.withValues(alpha: 0.78),
       child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
             // Glowing check icon
             Container(
               width: 76,
@@ -611,6 +612,7 @@ class _CompletedOverlay extends StatelessWidget {
           ],
         ),
       ),
+      ),
     );
   }
 }
@@ -626,9 +628,10 @@ class _LoadingOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
           const SizedBox(
             width: 42,
             height: 42,
@@ -655,6 +658,7 @@ class _LoadingOverlay extends StatelessWidget {
           ),
         ],
       ),
+      ),
     );
   }
 }
@@ -673,9 +677,10 @@ class _ErrorOverlay extends StatelessWidget {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(28),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
             const Icon(LucideIcons.videoOff,
                 color: Colors.white38, size: 44),
             const SizedBox(height: 12),
@@ -726,6 +731,7 @@ class _ErrorOverlay extends StatelessWidget {
               ),
             ],
           ],
+        ),
         ),
       ),
     );
