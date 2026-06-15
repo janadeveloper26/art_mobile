@@ -58,11 +58,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "832843490506-bt3tcvrdve00pf6ncmk3rc44c7r89189.apps.googleusercontent.com",
+          "client_id": "832843490506-nlbaqt9iv3no0v9n7r5a2vr91e1jphu1.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.gloriousartcreations.app",
-            "certificate_hash": "80a43b67d2aa7ed0167b1d49a81ad3fb992e73f1"
+            "certificate_hash": "5ebbfa724084a97ccf35e21616b822a971161caf"
           }
         },
         {
