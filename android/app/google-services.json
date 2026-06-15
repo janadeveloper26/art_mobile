@@ -14,11 +14,55 @@
       },
       "oauth_client": [
         {
-          "client_id": "832843490506-o3nmejtpemmcsm7f7d54paigsk442o5a.apps.googleusercontent.com",
+          "client_id": "832843490506-oljn6kepi4dq9ov685taseec264cfc0d.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.example.learning_app",
-            "certificate_hash": "0ebab8b9ee2b6e97b0516040f0d94759a857e35f"
+            "certificate_hash": "80a43b67d2aa7ed0167b1d49a81ad3fb992e73f1"
+          }
+        },
+        {
+          "client_id": "832843490506-9fglpf1pnr770uaspe23n2l6vb191927.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDkoImdGTrb4XSYwkkHFiud4Sk9m79UD7k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "832843490506-9fglpf1pnr770uaspe23n2l6vb191927.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "832843490506-lct9v7oujucmhts91p1frkmdicg0paot.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.learningApp"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:832843490506:android:2408528b95dfcb7f6c0033",
+        "android_client_info": {
+          "package_name": "com.gloriousartcreations.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "832843490506-bt3tcvrdve00pf6ncmk3rc44c7r89189.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.gloriousartcreations.app",
+            "certificate_hash": "80a43b67d2aa7ed0167b1d49a81ad3fb992e73f1"
           }
         },
         {

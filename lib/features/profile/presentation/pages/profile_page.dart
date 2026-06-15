@@ -49,10 +49,8 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => ProfileBloc()..add(const LoadProfile()),
-      child: BlocListener<ProfileBloc, ProfileState>(
-        listenWhen: (prev, curr) => prev.updateSuccess != curr.updateSuccess || (prev.error == null && curr.error != null),
+    return BlocListener<ProfileBloc, ProfileState>(
+      listenWhen: (prev, curr) => prev.updateSuccess != curr.updateSuccess || (prev.error == null && curr.error != null),
         listener: (context, state) {
           if (state.updateSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -177,8 +175,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
           );
         },
       ),
-    ),
-  );
+    );
   }
 
   String? _avatarUrl(UserData? user) {

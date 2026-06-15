@@ -9,6 +9,7 @@ import 'package:art_mobile/core/theme/theme_manager.dart';
 import 'package:art_mobile/core/config/service_locator.dart';
 import 'package:art_mobile/features/courses/data/models/course_model.dart';
 import 'package:art_mobile/features/courses/data/mock_course_service.dart';
+import 'package:art_mobile/features/video_player/data/video_progress_service.dart';
 import 'package:art_mobile/features/video_player/data/s3_video_service.dart';
 import '../bloc/video_player_bloc.dart';
 import '../bloc/video_player_event.dart';
@@ -33,7 +34,10 @@ class VideoPlayerPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => VideoPlayerBloc(s3VideoService: sl<S3VideoService>()),
+      create: (_) => VideoPlayerBloc(
+        s3VideoService: sl<S3VideoService>(),
+        progressService: sl<VideoProgressService>(),
+      ),
       child: _VideoPlayerView(
         courseId: courseId,
         videoId: videoId,
@@ -69,6 +73,8 @@ class _VideoPlayerViewState extends State<_VideoPlayerView>
   String? _courseError;
   CourseLesson? _currentLesson;
   String _currentVideoUrl = '';
+  bool _isFullscreen = false;
+  Set<String> _completedLessonIds = {};
 
   @override
   void initState() {
@@ -77,9 +83,16 @@ class _VideoPlayerViewState extends State<_VideoPlayerView>
     _loadCourseAndPlay();
   }
 
+  void _updateCompletedLessons() {
+    setState(() {
+      _completedLessonIds = sl<VideoProgressService>().getCompletedLessons(widget.courseId);
+    });
+  }
+
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _exitFullscreen();
     super.dispose();
   }
 
@@ -100,6 +113,7 @@ class _VideoPlayerViewState extends State<_VideoPlayerView>
         _courseDetail = detail;
         _courseLoading = false;
       });
+      _updateCompletedLessons();
       _playLesson(_resolveLesson(detail));
     } catch (e) {
       if (!mounted) return;
@@ -129,14 +143,40 @@ class _VideoPlayerViewState extends State<_VideoPlayerView>
       _currentLesson = lesson;
       _currentVideoUrl = url;
     });
-    context
-        .read<VideoPlayerBloc>()
-        .add(LoadVideo(videoUrl: url, lessonTitle: lesson.title));
+    context.read<VideoPlayerBloc>().add(LoadVideo(
+          videoUrl: url,
+          lessonTitle: lesson.title,
+          lessonId: lesson.id,
+          courseId: widget.courseId,
+        ));
   }
 
   void _switchLesson(CourseLesson lesson) {
     if (lesson.id == _currentLesson?.id) return;
     _playLesson(lesson);
+  }
+
+  Future<bool> _onWillPop() async {
+    if (_isFullscreen) {
+      _exitFullscreen();
+      return false;
+    }
+    return true;
+  }
+
+  void _enterFullscreen() {
+    setState(() => _isFullscreen = true);
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeRight,
+      DeviceOrientation.landscapeLeft,
+    ]);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  }
+
+  void _exitFullscreen() {
+    setState(() => _isFullscreen = false);
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   }
 
   @override
@@ -174,16 +214,18 @@ class _VideoPlayerViewState extends State<_VideoPlayerView>
     final allLessons =
         _courseDetail!.curriculum.expand((s) => s.lessons).toList();
 
-    return Scaffold(
-      backgroundColor: bg,
-      appBar: _appBar(isDark),
-      body: Column(
-        children: [
-          _VideoArea(
-            isDark: isDark,
-            retryUrl: _currentVideoUrl.isNotEmpty ? _currentVideoUrl : null,
-            retryTitle: _currentLesson?.title,
-          ),
+    final mainContent = Column(
+      children: [
+        _VideoArea(
+          isDark: isDark,
+          retryUrl: _currentVideoUrl.isNotEmpty ? _currentVideoUrl : null,
+          retryTitle: _currentLesson?.title,
+          retryLessonId: _currentLesson?.id,
+          retryCourseId: widget.courseId,
+          isFullscreen: _isFullscreen,
+          onFullscreenToggle: _isFullscreen ? _exitFullscreen : _enterFullscreen,
+        ),
+        if (!_isFullscreen)
           Expanded(
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
@@ -204,6 +246,7 @@ class _VideoPlayerViewState extends State<_VideoPlayerView>
                         lesson: l,
                         isActive: l.id == _currentLesson?.id,
                         isDark: isDark,
+                        isCompleted: _completedLessonIds.contains(l.id),
                         onTap: () => _switchLesson(l),
                       )),
                   const SizedBox(height: 48),
@@ -211,7 +254,34 @@ class _VideoPlayerViewState extends State<_VideoPlayerView>
               ),
             ),
           ),
-        ],
+      ],
+    );
+
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: BlocListener<VideoPlayerBloc, VideoPlayerState>(
+        listenWhen: (previous, current) => current is VideoPlaying && current.resumePosition != null,
+        listener: (context, state) {
+          if (state is VideoPlaying && state.resumePosition != null) {
+            final pos = state.resumePosition!;
+            final formattedPos = '${pos.inMinutes}:${(pos.inSeconds % 60).toString().padLeft(2, '0')}';
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Resumed from $formattedPos'),
+                behavior: SnackBarBehavior.floating,
+                duration: const Duration(seconds: 2),
+                backgroundColor: const Color(0xFF6A1B9A),
+              ),
+            );
+          }
+        },
+        child: Scaffold(
+          backgroundColor: bg,
+          appBar: _isFullscreen ? null : _appBar(isDark),
+          body: _isFullscreen
+              ? Center(child: mainContent)
+              : mainContent,
+        ),
       ),
     );
   }
@@ -246,10 +316,19 @@ class _VideoArea extends StatelessWidget {
   final bool isDark;
   final String? retryUrl;
   final String? retryTitle;
+  final String? retryLessonId;
+  final String? retryCourseId;
+  final bool isFullscreen;
+  final VoidCallback onFullscreenToggle;
+
   const _VideoArea({
     required this.isDark,
     this.retryUrl,
     this.retryTitle,
+    this.retryLessonId,
+    this.retryCourseId,
+    required this.isFullscreen,
+    required this.onFullscreenToggle,
   });
 
   @override
@@ -269,18 +348,24 @@ class _VideoArea extends StatelessWidget {
             if (state is VideoPlayerError) {
               return _ErrorOverlay(
                 message: state.message,
-                onRetry: (retryUrl != null && retryTitle != null)
+                onRetry: (retryUrl != null && retryTitle != null && retryLessonId != null && retryCourseId != null)
                     ? () => context.read<VideoPlayerBloc>().add(
                           RetryVideo(
                             videoUrl: retryUrl!,
                             lessonTitle: retryTitle!,
+                            lessonId: retryLessonId!,
+                            courseId: retryCourseId!,
                           ),
                         )
                     : null,
               );
             }
             if (state is VideoPlayerReady) {
-              return _ActivePlayer(readyState: state);
+              return _ActivePlayer(
+                readyState: state,
+                isFullscreen: isFullscreen,
+                onFullscreenToggle: onFullscreenToggle,
+              );
             }
             return const _BlankPlaceholder();
           },
@@ -296,7 +381,14 @@ class _VideoArea extends StatelessWidget {
 
 class _ActivePlayer extends StatefulWidget {
   final VideoPlayerReady readyState;
-  const _ActivePlayer({required this.readyState});
+  final bool isFullscreen;
+  final VoidCallback onFullscreenToggle;
+
+  const _ActivePlayer({
+    required this.readyState,
+    required this.isFullscreen,
+    required this.onFullscreenToggle,
+  });
 
   @override
   State<_ActivePlayer> createState() => _ActivePlayerState();
@@ -341,6 +433,8 @@ class _ActivePlayerState extends State<_ActivePlayer> {
                     position: value.position,
                     duration: value.duration,
                     buffered: value.buffered,
+                    isFullscreen: widget.isFullscreen,
+                    onFullscreenToggle: widget.onFullscreenToggle,
                   ),
                 ),
             ],
@@ -360,12 +454,16 @@ class _ControlsOverlay extends StatelessWidget {
   final Duration position;
   final Duration duration;
   final List<DurationRange> buffered;
+  final bool isFullscreen;
+  final VoidCallback onFullscreenToggle;
 
   const _ControlsOverlay({
     required this.isPlaying,
     required this.position,
     required this.duration,
     required this.buffered,
+    required this.isFullscreen,
+    required this.onFullscreenToggle,
   });
 
   String _fmt(Duration d) {
@@ -492,9 +590,23 @@ class _ControlsOverlay extends StatelessWidget {
                     Text(_fmt(position),
                         style: GoogleFonts.outfit(
                             color: Colors.white70, fontSize: 11)),
-                    Text(_fmt(duration),
-                        style: GoogleFonts.outfit(
-                            color: Colors.white70, fontSize: 11)),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(_fmt(duration),
+                            style: GoogleFonts.outfit(
+                                color: Colors.white70, fontSize: 11)),
+                        const SizedBox(width: 8),
+                        GestureDetector(
+                          onTap: onFullscreenToggle,
+                          child: Icon(
+                            isFullscreen ? Icons.fullscreen_exit_rounded : Icons.fullscreen_rounded,
+                            color: Colors.white70,
+                            size: 20,
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ],
@@ -917,12 +1029,14 @@ class _LessonListItem extends StatelessWidget {
   final CourseLesson lesson;
   final bool isActive;
   final bool isDark;
+  final bool isCompleted;
   final VoidCallback onTap;
 
   const _LessonListItem({
     required this.lesson,
     required this.isActive,
     required this.isDark,
+    required this.isCompleted,
     required this.onTap,
   });
 
@@ -1012,7 +1126,7 @@ class _LessonListItem extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (lesson.isCompleted)
+                if (isCompleted)
                   const Icon(Icons.check_circle_rounded,
                       color: _purple, size: 20)
                 else if (lesson.isPreview)

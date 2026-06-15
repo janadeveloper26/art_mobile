@@ -1,0 +1,8 @@
+{
+  "_comment": "Development environment — used when running 'flutter run' locally.",
+  "_comment2": "Run with: flutter run --dart-define-from-file=env/development.json",
+  "ENV": "development",
+  "BASE_URL": "http://10.0.2.2:8000/api/v1/",
+  "CLOUDFRONT_URL": "https://d3aj7czvezt6jf.cloudfront.net",
+  "RAZORPAY_KEY": "rzp_test_XXXXXXXXXXXXXXXX"
+}

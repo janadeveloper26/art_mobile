@@ -11,7 +11,7 @@ class FirebaseAuthService {
 
   final FirebaseAuth _firebaseAuth;
   final GoogleSignIn _googleSignIn;
-  Future<String> signInWithGoogle() async {
+  Future<GoogleSignInResult> signInWithGoogle() async {
     try {
       final GoogleSignInAccount googleUser = await _googleSignIn.authenticate();
 
@@ -32,7 +32,12 @@ class FirebaseAuthService {
         throw Exception('Failed to get Firebase token');
       }
 
-      return token;
+      return GoogleSignInResult(
+        idToken: token,
+        displayName: googleUser.displayName,
+        email: googleUser.email,
+        photoUrl: googleUser.photoUrl,
+      );
     } on FirebaseAuthException catch (e) {
       throw Exception(e.message);
     }
@@ -112,4 +117,18 @@ class FirebaseAuthService {
       _googleSignIn.signOut(),
     ]);
   }
+}
+
+class GoogleSignInResult {
+  final String idToken;
+  final String? displayName;
+  final String? email;
+  final String? photoUrl;
+
+  GoogleSignInResult({
+    required this.idToken,
+    this.displayName,
+    this.email,
+    this.photoUrl,
+  });
 }

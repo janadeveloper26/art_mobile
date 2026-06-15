@@ -3,15 +3,21 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:video_player/video_player.dart';
 import 'package:art_mobile/features/video_player/data/s3_video_service.dart';
+import 'package:art_mobile/features/video_player/data/video_progress_service.dart';
 import 'video_player_event.dart';
 import 'video_player_state.dart';
 
 class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
   final S3VideoService _s3VideoService;
+  final VideoProgressService _progressService;
   VideoPlayerController? _controller;
+  Timer? _positionTimer;
 
-  VideoPlayerBloc({required S3VideoService s3VideoService})
-      : _s3VideoService = s3VideoService,
+  VideoPlayerBloc({
+    required S3VideoService s3VideoService,
+    required VideoProgressService progressService,
+  })  : _s3VideoService = s3VideoService,
+        _progressService = progressService,
         super(const VideoPlayerInitial()) {
     on<LoadVideo>(_onLoadVideo);
     on<PlayVideo>(_onPlayVideo);
@@ -22,6 +28,8 @@ class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
     on<VideoErrorOccurred>(_onVideoError);
     on<DisposePlayer>(_onDisposePlayer);
     on<RetryVideo>(_onRetryVideo);
+    on<SavePositionEvent>(_onSavePosition);
+    on<MarkLessonComplete>(_onMarkLessonComplete);
   }
 
   // ─── Handlers ──────────────────────────────────────────────────────────────
@@ -56,11 +64,20 @@ class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
       await controller.play();
 
       if (!isClosed) {
+        final savedPos = _progressService.getPosition(event.lessonId);
+        if (savedPos != null) {
+          await controller.seekTo(savedPos);
+        }
+        
         emit(VideoPlaying(
           controller: controller,
           lessonTitle: event.lessonTitle,
+          lessonId: event.lessonId,
+          courseId: event.courseId,
           duration: controller.value.duration,
+          resumePosition: savedPos,
         ));
+        _startPositionTimer(event.lessonId);
       }
     } on TimeoutException catch (e) {
       emit(VideoPlayerError(message: e.message ?? 'Video load timed out.'));
@@ -87,8 +104,11 @@ class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
     emit(VideoPlaying(
       controller: ctrl,
       lessonTitle: s.lessonTitle,
+      lessonId: s.lessonId,
+      courseId: s.courseId,
       duration: ctrl.value.duration,
     ));
+    _startPositionTimer(s.lessonId);
   }
 
   void _onPauseVideo(PauseVideo event, Emitter<VideoPlayerState> emit) {
@@ -98,9 +118,13 @@ class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
       return;
     }
     ctrl.pause();
+    _stopPositionTimer();
+    add(SavePositionEvent(ctrl.value.position));
     emit(VideoPaused(
       controller: ctrl,
       lessonTitle: s.lessonTitle,
+      lessonId: s.lessonId,
+      courseId: s.courseId,
       duration: ctrl.value.duration,
     ));
   }
@@ -115,8 +139,11 @@ class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
     emit(VideoPlaying(
       controller: ctrl,
       lessonTitle: s.lessonTitle,
+      lessonId: s.lessonId,
+      courseId: s.courseId,
       duration: ctrl.value.duration,
     ));
+    _startPositionTimer(s.lessonId);
   }
 
   Future<void> _onSeekTo(SeekTo event, Emitter<VideoPlayerState> emit) async {
@@ -131,11 +158,15 @@ class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
       emit(VideoPlaying(
           controller: ctrl,
           lessonTitle: s.lessonTitle,
+          lessonId: s.lessonId,
+          courseId: s.courseId,
           duration: ctrl.value.duration));
     } else {
       emit(VideoPaused(
           controller: ctrl,
           lessonTitle: s.lessonTitle,
+          lessonId: s.lessonId,
+          courseId: s.courseId,
           duration: ctrl.value.duration));
     }
   }
@@ -146,11 +177,16 @@ class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
     final s = state;
     if (ctrl == null || s is! VideoPlayerReady) return;
     ctrl.pause();
+    _stopPositionTimer();
     // Seek to end so position display shows full duration
     ctrl.seekTo(ctrl.value.duration);
+    add(const MarkLessonComplete());
+    
     emit(VideoCompleted(
       controller: ctrl,
       lessonTitle: s.lessonTitle,
+      lessonId: s.lessonId,
+      courseId: s.courseId,
       duration: ctrl.value.duration,
     ));
   }
@@ -195,16 +231,54 @@ class VideoPlayerBloc extends Bloc<VideoPlayerEvent, VideoPlayerState> {
   Future<void> _onRetryVideo(
       RetryVideo event, Emitter<VideoPlayerState> emit) async {
     await _onLoadVideo(
-      LoadVideo(videoUrl: event.videoUrl, lessonTitle: event.lessonTitle),
+      LoadVideo(
+        videoUrl: event.videoUrl, 
+        lessonTitle: event.lessonTitle,
+        lessonId: event.lessonId,
+        courseId: event.courseId,
+      ),
       emit,
     );
+  }
+
+  Future<void> _onSavePosition(
+      SavePositionEvent event, Emitter<VideoPlayerState> emit) async {
+    final s = state;
+    if (s is VideoPlayerReady) {
+      await _progressService.savePosition(s.lessonId, event.position);
+    }
+  }
+
+  Future<void> _onMarkLessonComplete(
+      MarkLessonComplete event, Emitter<VideoPlayerState> emit) async {
+    final s = state;
+    if (s is VideoPlayerReady) {
+      await _progressService.markLessonComplete(s.courseId, s.lessonId);
+    }
+  }
+
+  void _startPositionTimer(String lessonId) {
+    _stopPositionTimer();
+    _positionTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      final ctrl = _controller;
+      if (ctrl != null && ctrl.value.isPlaying) {
+        add(SavePositionEvent(ctrl.value.position));
+      }
+    });
+  }
+
+  void _stopPositionTimer() {
+    _positionTimer?.cancel();
+    _positionTimer = null;
   }
 
   // ─── Helpers ────────────────────────────────────────────────────────────────
 
   Future<void> _disposeController() async {
+    _stopPositionTimer();
     final ctrl = _controller;
     if (ctrl != null) {
+      add(SavePositionEvent(ctrl.value.position));
       ctrl.removeListener(_onControllerUpdate);
       await ctrl.pause();
       await ctrl.dispose();

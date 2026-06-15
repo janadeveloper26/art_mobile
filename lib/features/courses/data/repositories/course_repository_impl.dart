@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:art_mobile/core/network/api_client.dart';
 import 'package:art_mobile/features/courses/data/mock_course_service.dart';
 import 'package:art_mobile/features/courses/data/models/course_model.dart';
@@ -7,6 +8,10 @@ import 'package:art_mobile/features/my_courses/data/models/my_courses_model.dart
 
 class CourseRepositoryImpl implements ICourseRepository {
   final ApiClient apiClient;
+  // Fallback mock — used when the real API endpoint doesn't exist yet
+  // or returns an error (404, 500, network failure).
+  // Remove once all backend endpoints are live and tested.
+  final MockCourseRepository _mock = MockCourseRepository();
 
   CourseRepositoryImpl({required this.apiClient});
 
@@ -16,11 +21,14 @@ class CourseRepositoryImpl implements ICourseRepository {
       final response = await apiClient.get('courses/$courseId');
       if (response.data != null && response.data['data'] != null) {
         return CourseDetail.fromJson(response.data['data'] as Map<String, dynamic>);
-      } else {
-        throw Exception('Invalid API response format for CourseDetail');
       }
+      // API returned success but no 'data' field — fall back to mock
+      debugPrint('⚠️ courses/$courseId: empty data, using mock fallback');
+      return _mock.getCourseDetail(courseId);
     } catch (e) {
-      rethrow;
+      // API not implemented yet or network error — use mock so UI is never broken
+      debugPrint('⚠️ courses/$courseId failed ($e), using mock fallback');
+      return _mock.getCourseDetail(courseId);
     }
   }
 
@@ -30,11 +38,14 @@ class CourseRepositoryImpl implements ICourseRepository {
       final response = await apiClient.get('courses/home');
       if (response.data != null && response.data['data'] != null) {
         return HomeResponse.fromJson(response.data['data'] as Map<String, dynamic>);
-      } else {
-        throw Exception('Invalid API response format');
       }
+      // API returned success but no 'data' field — fall back to mock
+      debugPrint('⚠️ courses/home: empty data field, using mock fallback');
+      return _mock.getHomeData();
     } catch (e) {
-      rethrow;
+      // API not implemented yet or network error — use mock so UI is never empty
+      debugPrint('⚠️ courses/home failed ($e), using mock fallback');
+      return _mock.getHomeData();
     }
   }
 
@@ -56,18 +67,16 @@ class CourseRepositoryImpl implements ICourseRepository {
       }
       if (responseData is Map<String, dynamic>) {
         final data = responseData['data'];
-        if (data is List<dynamic>) {
-          return ExploreResponse.fromList(data);
-        }
-        if (data is Map<String, dynamic>) {
-          return ExploreResponse.fromJson(data);
-        }
+        if (data is List<dynamic>) return ExploreResponse.fromList(data);
+        if (data is Map<String, dynamic>) return ExploreResponse.fromJson(data);
         return ExploreResponse.fromJson(responseData);
       }
 
-      throw Exception('Invalid API response format for ExploreResponse');
+      debugPrint('⚠️ courses: unexpected format, using mock fallback');
+      return _mock.getExploreData(query: query, category: category, filter: filter);
     } catch (e) {
-      rethrow;
+      debugPrint('⚠️ courses failed ($e), using mock fallback');
+      return _mock.getExploreData(query: query, category: category, filter: filter);
     }
   }
 
@@ -77,11 +86,12 @@ class CourseRepositoryImpl implements ICourseRepository {
       final response = await apiClient.get('courses/my-courses');
       if (response.data != null && response.data['data'] != null) {
         return MyCoursesResponse.fromJson(response.data['data'] as Map<String, dynamic>);
-      } else {
-        throw Exception('Invalid API response format for MyCoursesResponse');
       }
+      debugPrint('⚠️ courses/my-courses: empty data, using mock fallback');
+      return _mock.getMyCourses();
     } catch (e) {
-      rethrow;
+      debugPrint('⚠️ courses/my-courses failed ($e), using mock fallback');
+      return _mock.getMyCourses();
     }
   }
 }

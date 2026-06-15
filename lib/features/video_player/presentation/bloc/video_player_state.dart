@@ -4,6 +4,8 @@ import 'package:video_player/video_player.dart';
 abstract class VideoPlayerState extends Equatable {
   const VideoPlayerState();
 
+  bool get isStreaming => this is VideoPlaying;
+
   @override
   List<Object?> get props => [];
 }
@@ -28,25 +30,37 @@ class VideoPlayerLoading extends VideoPlayerState {
 abstract class VideoPlayerReady extends VideoPlayerState {
   final VideoPlayerController controller;
   final String lessonTitle;
+  final String lessonId;
+  final String courseId;
   final Duration duration;
 
   const VideoPlayerReady({
     required this.controller,
     required this.lessonTitle,
+    required this.lessonId,
+    required this.courseId,
     required this.duration,
   });
 
   @override
-  List<Object?> get props => [controller, lessonTitle, duration];
+  List<Object?> get props => [controller, lessonTitle, lessonId, courseId, duration];
 }
 
 /// Video is actively playing.
 class VideoPlaying extends VideoPlayerReady {
+  final Duration? resumePosition; // Used to show toast
+
   const VideoPlaying({
     required super.controller,
     required super.lessonTitle,
+    required super.lessonId,
+    required super.courseId,
     required super.duration,
+    this.resumePosition,
   });
+  
+  @override
+  List<Object?> get props => super.props..add(resumePosition);
 }
 
 /// Video is paused (user action or app lifecycle).
@@ -54,6 +68,8 @@ class VideoPaused extends VideoPlayerReady {
   const VideoPaused({
     required super.controller,
     required super.lessonTitle,
+    required super.lessonId,
+    required super.courseId,
     required super.duration,
   });
 }
@@ -63,6 +79,8 @@ class VideoCompleted extends VideoPlayerReady {
   const VideoCompleted({
     required super.controller,
     required super.lessonTitle,
+    required super.lessonId,
+    required super.courseId,
     required super.duration,
   });
 }

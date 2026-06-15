@@ -11,11 +11,18 @@ abstract class VideoPlayerEvent extends Equatable {
 class LoadVideo extends VideoPlayerEvent {
   final String videoUrl;
   final String lessonTitle;
+  final String lessonId;
+  final String courseId;
 
-  const LoadVideo({required this.videoUrl, required this.lessonTitle});
+  const LoadVideo({
+    required this.videoUrl,
+    required this.lessonTitle,
+    required this.lessonId,
+    required this.courseId,
+  });
 
   @override
-  List<Object?> get props => [videoUrl, lessonTitle];
+  List<Object?> get props => [videoUrl, lessonTitle, lessonId, courseId];
 }
 
 /// Start playback (used after seek-to-zero + replay).
@@ -68,9 +75,30 @@ class DisposePlayer extends VideoPlayerEvent {
 class RetryVideo extends VideoPlayerEvent {
   final String videoUrl;
   final String lessonTitle;
+  final String lessonId;
+  final String courseId;
 
-  const RetryVideo({required this.videoUrl, required this.lessonTitle});
+  const RetryVideo({
+    required this.videoUrl,
+    required this.lessonTitle,
+    required this.lessonId,
+    required this.courseId,
+  });
 
   @override
-  List<Object?> get props => [videoUrl, lessonTitle];
+  List<Object?> get props => [videoUrl, lessonTitle, lessonId, courseId];
+}
+
+/// Save the current position periodically or on pause.
+class SavePositionEvent extends VideoPlayerEvent {
+  final Duration position;
+  const SavePositionEvent(this.position);
+
+  @override
+  List<Object?> get props => [position];
+}
+
+/// Mark lesson as complete when video ends naturally.
+class MarkLessonComplete extends VideoPlayerEvent {
+  const MarkLessonComplete();
 }

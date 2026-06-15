@@ -17,6 +17,8 @@ class ApiClient {
       ..sendTimeout = EnvironmentConfig.sendTimeout
       ..contentType = 'application/json'
       ..responseType = ResponseType.json;
+
+    dio.options.headers['ngrok-skip-browser-warning'] = 'true';
   }
 
   // GET request

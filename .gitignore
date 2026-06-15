@@ -43,3 +43,13 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Environment config files with secrets
+# development.json is safe to commit (only local defaults, no real keys)
+# production.json and staging.json contain live API keys — NEVER commit them
+/env/production.json
+/env/staging.json
+
+.vscode/
+.json_tool/
+.vscode/settings.json

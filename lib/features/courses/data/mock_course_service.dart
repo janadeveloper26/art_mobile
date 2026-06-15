@@ -19,7 +19,7 @@ class MockCourseRepository implements ICourseRepository {
       title: 'Aari Embroidery Masterclass',
       description:
           'Master the ancient art of Aari embroidery with this comprehensive masterclass. We cover everything from setting up your frame to executing complex bridal designs with precision. You will learn the signature "Atelier Flow" that ensures consistent tension and speed.',
-      instructor: 'Priya Sharma',
+      instructor: 'Gloriousart Creations',
       instructorAvatar: 'assets/images/profile_avatar.png',
       instructorRole: 'Expert Instructor · 5 years exp',
       level: 'INTERMEDIATE',
@@ -134,7 +134,7 @@ class MockCourseRepository implements ICourseRepository {
         CourseSummary(
           id: '1',
           title: 'Aari Embroidery Masterclass',
-          instructor: 'Priya Sharma',
+          instructor: 'Gloriousart Creations',
           category: 'Aari',
           image: 'assets/images/aari_hero.png',
           progress: 0.65,
@@ -146,7 +146,7 @@ class MockCourseRepository implements ICourseRepository {
         CourseSummary(
           id: '2',
           title: 'Complete Tailoring for Beginners',
-          instructor: 'Meena Lakshmi',
+          instructor: 'Gloriousart Creations',
           category: 'Tailoring',
           image: 'assets/images/silk_course.png',
           progress: 0.30,
@@ -160,7 +160,7 @@ class MockCourseRepository implements ICourseRepository {
         CourseSummary(
           id: '3',
           title: 'Modern Zardosi Art',
-          instructor: 'Elena Rose',
+          instructor: 'Gloriousart Creations',
           category: 'Design',
           image: 'assets/images/zardosi_activity.png',
           badge: 'Beginner',
@@ -173,7 +173,7 @@ class MockCourseRepository implements ICourseRepository {
         CourseSummary(
           id: '4',
           title: 'Bridal Blouse Masterclass',
-          instructor: 'Kavitha R.',
+          instructor: 'Gloriousart Creations',
           category: 'Design',
           image: 'assets/images/theory_activity.png',
           badge: 'Advanced',
@@ -186,15 +186,15 @@ class MockCourseRepository implements ICourseRepository {
       ],
       instructors: [
         InstructorSummary(
-            name: 'Priya S.', initial: 'P', colors: [0xFF6A1B9A, 0xFFAB47BC]),
+            name: 'Gloriousart', initial: 'G', colors: [0xFF6A1B9A, 0xFFAB47BC]),
         InstructorSummary(
-            name: 'Meena L.', initial: 'M', colors: [0xFF4527A0, 0xFF7E57C2]),
+            name: 'Creations', initial: 'C', colors: [0xFF4527A0, 0xFF7E57C2]),
         InstructorSummary(
-            name: 'Kavitha R.', initial: 'K', colors: [0xFF880E4F, 0xFFAD1457]),
+            name: 'Aari Pro', initial: 'A', colors: [0xFF880E4F, 0xFFAD1457]),
         InstructorSummary(
-            name: 'Sudha M.', initial: 'S', colors: [0xFF1565C0, 0xFF42A5F5]),
+            name: 'Tailor G', initial: 'T', colors: [0xFF1565C0, 0xFF42A5F5]),
         InstructorSummary(
-            name: 'Anita K.', initial: 'A', colors: [0xFF2E7D32, 0xFF66BB6A]),
+            name: 'Design Pro', initial: 'D', colors: [0xFF2E7D32, 0xFF66BB6A]),
       ],
     );
   }
@@ -208,7 +208,7 @@ class MockCourseRepository implements ICourseRepository {
       CourseSummary(
         id: '1',
         title: 'Aari Embroidery Masterclass',
-        instructor: 'Priya Sharma',
+        instructor: 'Gloriousart Creations',
         category: 'Aari',
         image: 'assets/images/aari_hero.png',
         rating: 4.8,
@@ -220,7 +220,7 @@ class MockCourseRepository implements ICourseRepository {
       CourseSummary(
         id: '2',
         title: 'Complete Tailoring for Beginners',
-        instructor: 'Meena Lakshmi',
+        instructor: 'Gloriousart Creations',
         category: 'Tailoring',
         image: 'assets/images/silk_course.png',
         rating: 4.5,
@@ -232,7 +232,7 @@ class MockCourseRepository implements ICourseRepository {
       CourseSummary(
         id: '3',
         title: 'Modern Zardosi Art',
-        instructor: 'Elena Rose',
+        instructor: 'Gloriousart Creations',
         category: 'Embroidery',
         image: 'assets/images/zardosi_activity.png',
         rating: 4.9,
@@ -244,7 +244,7 @@ class MockCourseRepository implements ICourseRepository {
       CourseSummary(
         id: '4',
         title: 'Bridal Blouse Masterclass',
-        instructor: 'Kavitha R.',
+        instructor: 'Gloriousart Creations',
         category: 'Blouse Design',
         image: 'assets/images/theory_activity.png',
         rating: 4.7,
@@ -288,7 +288,7 @@ class MockCourseRepository implements ICourseRepository {
       CourseSummary(
         id: '1',
         title: 'Aari Embroidery Masterclass',
-        instructor: 'Priya Sharma',
+        instructor: 'Gloriousart Creations',
         category: 'Aari',
         image: 'assets/images/aari_hero.png',
         progress: 0.65,
@@ -296,7 +296,7 @@ class MockCourseRepository implements ICourseRepository {
       CourseSummary(
         id: '3',
         title: 'Modern Zardosi Art',
-        instructor: 'Elena Rose',
+        instructor: 'Gloriousart Creations',
         category: 'Design',
         image: 'assets/images/zardosi_activity.png',
         progress: 0.25,
@@ -307,7 +307,7 @@ class MockCourseRepository implements ICourseRepository {
       CourseSummary(
         id: '4',
         title: 'Bridal Blouse Masterclass',
-        instructor: 'Kavitha R.',
+        instructor: 'Gloriousart Creations',
         category: 'Design',
         image: 'assets/images/theory_activity.png',
         progress: 1.0,

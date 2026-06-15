@@ -73,9 +73,15 @@ class AuthRepositoryImpl implements IAuthRepository {
   Future<Either<Failure, AuthData>> signInWithGoogle() async {
     try {
       debugPrint('🔑 Initiating Google Sign In');
-      final idToken = await firebaseAuthService.signInWithGoogle();
-      
-      return await _processDjangoAuth(idToken, isGoogle: true);
+      final googleResult = await firebaseAuthService.signInWithGoogle();
+
+      return await _processDjangoAuth(
+        googleResult.idToken,
+        isGoogle: true,
+        name: googleResult.displayName,
+        email: googleResult.email,
+        avatar: googleResult.photoUrl,
+      );
     } catch (e) {
       return Left(UnexpectedFailure(message: e.toString()));
     }
@@ -108,13 +114,19 @@ class AuthRepositoryImpl implements IAuthRepository {
     }
   }
 
-  Future<Either<Failure, AuthData>> _processDjangoAuth(String idToken, {required bool isGoogle, String? name}) async {
+  Future<Either<Failure, AuthData>> _processDjangoAuth(String idToken, {required bool isGoogle, String? name, String? email, String? avatar}) async {
     try {
       final device = await _buildDeviceMetadata();
 
       AuthData result;
       if (isGoogle) {
-        final request = FirebaseLoginRequest(idToken: idToken, device: device);
+        final request = FirebaseLoginRequest(
+          idToken: idToken,
+          name: name,
+          email: email,
+          avatar: avatar,
+          device: device,
+        );
         result = await remoteDataSource.firebaseLogin(request);
       } else {
         throw UnsupportedError('OTP auth must use sendOtp and verifyOtp.');

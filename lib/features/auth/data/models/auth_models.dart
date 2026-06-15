@@ -172,16 +172,25 @@ class DeviceMetadata {
 
 class FirebaseLoginRequest {
   final String idToken;
+  final String? name;
+  final String? email;
+  final String? avatar;
   final DeviceMetadata device;
 
   FirebaseLoginRequest({
     required this.idToken,
+    this.name,
+    this.email,
+    this.avatar,
     required this.device,
   });
 
   Map<String, dynamic> toJson() {
     return {
       'firebase_token': idToken,
+      if (name != null) 'name': name,
+      if (email != null) 'email': email,
+      if (avatar != null) 'avatar': avatar,
       'device': device.toJson(),
     };
   }

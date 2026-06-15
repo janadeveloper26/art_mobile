@@ -38,8 +38,7 @@ class S3VideoService {
         debugPrint('S3VideoService: fetching signed URL for $fileName');
         final signedUrl = await _getOrFetchSignedUrl(fileName);
         debugPrint('S3VideoService: signed URL received: $signedUrl');
-        final transformed = _replaceS3WithCloudFront(signedUrl);
-        final uri = Uri.tryParse(transformed);
+        final uri = Uri.tryParse(signedUrl);
         if (uri != null && uri.host.isNotEmpty) {
           debugPrint('S3VideoService: using signed URL');
           return uri;
@@ -113,9 +112,19 @@ class S3VideoService {
       if (uri.host.contains('.s3.') ||
           uri.host.contains('.s3-') ||
           uri.host.endsWith('.amazonaws.com')) {
-        final path = uri.path;
-        final cdnUri = Uri.tryParse('$_cloudFrontBaseUrl$path');
-        if (cdnUri != null && cdnUri.host.isNotEmpty) {
+        String base = _cloudFrontBaseUrl;
+        if (!base.startsWith('http://') && !base.startsWith('https://')) {
+          base = 'https://$base';
+        }
+        
+        final baseUri = Uri.parse(base);
+        final cdnUri = uri.replace(
+          scheme: baseUri.scheme,
+          host: baseUri.host,
+          port: baseUri.port,
+        );
+        
+        if (cdnUri.host.isNotEmpty) {
           return cdnUri.toString();
         }
       }

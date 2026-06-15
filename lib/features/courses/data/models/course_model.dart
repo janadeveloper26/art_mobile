@@ -50,7 +50,7 @@ class CourseDetail {
       id: _stringFromAny(json['id']),
       title: json['title'] as String? ?? '',
       description: json['description'] as String? ?? '',
-      instructor: json['instructor'] as String? ?? '',
+      instructor: _stringFromAny(json['instructor_name'] ?? json['instructor']),
       instructorAvatar: json['instructor_avatar'] as String? ?? '',
       instructorRole: json['instructor_role'] as String? ?? '',
       level: json['level'] as String? ?? '',
@@ -88,7 +88,10 @@ String _stringFromAny(dynamic value) {
           value['video_url'] ??
           value['s3_url'] ??
           value['file'] ??
-          value['key'],
+          value['key'] ??
+          value['name'] ??
+          value['full_name'] ??
+          value['title'],
     );
   }
   return value.toString();
@@ -295,7 +298,7 @@ class CourseSummary {
     return CourseSummary(
       id: _stringFromAny(json['id']),
       title: json['title'] as String? ?? '',
-      instructor: json['instructor'] as String? ?? 'Unknown',
+      instructor: _stringFromAny(json['instructor_name'] ?? json['instructor']).isNotEmpty ? _stringFromAny(json['instructor_name'] ?? json['instructor']) : 'Unknown',
       category: json['category'] as String? ?? 'Uncategorized',
       image: json['image'] as String? ?? '',
       progress: json['progress'] != null ? (json['progress'] as num).toDouble() : null,

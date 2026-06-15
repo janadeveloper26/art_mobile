@@ -10,6 +10,7 @@ import 'package:art_mobile/core/theme/theme_colors.dart';
 import 'package:art_mobile/core/theme/theme_manager.dart';
 import 'package:art_mobile/features/auth/data/models/auth_models.dart';
 import 'package:art_mobile/features/payment/services/razorpay_service.dart';
+import 'package:art_mobile/features/video_player/data/video_progress_service.dart';
 import '../../data/models/course_model.dart';
 import '../../data/mock_course_service.dart';
 import '../bloc/course_detail/course_detail_bloc.dart';
@@ -93,6 +94,27 @@ class _CourseDetailViewState extends State<CourseDetailView> with TickerProvider
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
+
+    final state = context.read<CourseDetailBloc>().state;
+    if (state is CourseDetailLoaded) {
+      final firstSection = state.course.curriculum.isNotEmpty ? state.course.curriculum.first : null;
+      final firstLesson = firstSection?.lessons.isNotEmpty == true ? firstSection!.lessons.first : null;
+      
+      if (firstLesson != null && firstLesson.videoUrl.isNotEmpty) {
+        Future.delayed(const Duration(seconds: 1), () {
+          if (!mounted) return;
+          Navigator.pushNamed(
+            context,
+            AppRoutes.videoPlayer,
+            arguments: {
+              'courseId': state.course.id,
+              'videoId': firstLesson.id,
+              'videoUrl': firstLesson.videoUrl,
+            },
+          ).then((_) => setState(() {}));
+        });
+      }
+    }
   }
 
   void _handlePaymentFailure(PaymentFailureResponse response) {
@@ -165,7 +187,63 @@ class _CourseDetailViewState extends State<CourseDetailView> with TickerProvider
             }
   
             if (state is CourseDetailError) {
-              return Center(child: Text(state.message));
+              return Column(
+                children: [
+                  // Back button so user is never stuck
+                  Align(
+                    alignment: Alignment.topLeft,
+                    child: IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                    ),
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.error_outline_rounded, color: Colors.grey, size: 48),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Could not load course',
+                              style: GoogleFonts.outfit(
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold,
+                                color: isDark ? Colors.white : const Color(0xFF1A1A1A),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              state.message,
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.outfit(fontSize: 13, color: Colors.grey),
+                            ),
+                            const SizedBox(height: 24),
+                            ElevatedButton.icon(
+                              onPressed: () => context.read<CourseDetailBloc>().add(
+                                    LoadCourseDetail(
+                                      (context.read<CourseDetailBloc>().state as CourseDetailError?)
+                                              ?.message ??
+                                          '1',
+                                    ),
+                                  ),
+                              icon: const Icon(Icons.refresh),
+                              label: Text('Retry', style: GoogleFonts.outfit()),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF6A1B9A),
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
             }
   
             return const SizedBox.shrink();
@@ -287,7 +365,7 @@ class _CourseDetailViewState extends State<CourseDetailView> with TickerProvider
                           'videoId': videoId,
                           'videoUrl': videoUrl,
                         },
-                      ),
+                      ).then((_) => setState(() {})),
               child: Container(
                 width: 64,
                 height: 64,
@@ -564,6 +642,7 @@ class _CourseDetailViewState extends State<CourseDetailView> with TickerProvider
   }
 
   Widget _buildCurriculum(BuildContext context, CourseDetailLoaded state, bool isDark) {
+    final completedLessons = sl<VideoProgressService>().getCompletedLessons(state.course.id);
     return Column(
       children: state.course.curriculum.map((section) {
         final isExpanded = state.expandedSections.contains(section.id);
@@ -604,13 +683,13 @@ class _CourseDetailViewState extends State<CourseDetailView> with TickerProvider
                                 'videoId': lesson.id,
                                 'videoUrl': lesson.videoUrl,
                               },
-                            ),
+                            ).then((_) => setState(() {})),
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(border: Border(top: BorderSide(color: isDark ? Colors.white10 : Colors.grey.shade100))),
                       child: Row(
                         children: [
-                          Icon(lesson.isCompleted ? LucideIcons.checkCircle2 : LucideIcons.playCircle, color: const Color(0xFF6A1B9A), size: 18),
+                          Icon(completedLessons.contains(lesson.id) ? LucideIcons.checkCircle2 : LucideIcons.playCircle, color: const Color(0xFF6A1B9A), size: 18),
                           const SizedBox(width: 12),
                           Expanded(child: Text(lesson.title, style: GoogleFonts.outfit(fontSize: 14, color: isDark ? Colors.grey.shade300 : const Color(0xFF1A1A1A)))),
                           Text(lesson.duration, style: GoogleFonts.outfit(fontSize: 12, color: Colors.grey.shade500)),

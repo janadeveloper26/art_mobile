@@ -50,7 +50,9 @@ class _SupplyPageState extends State<SupplyPage> {
                         IconButton(
                           icon: Icon(LucideIcons.shoppingBag, color: isDark ? Colors.white : const Color(0xFF212121)),
                           onPressed: () {
-                            // TODO: Open Cart
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Cart feature coming soon!')),
+                            );
                           },
                         ),
                         if (state.cartCount > 0)

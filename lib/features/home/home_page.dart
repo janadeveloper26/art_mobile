@@ -10,8 +10,10 @@ import 'package:art_mobile/core/theme/theme_manager.dart';
 import 'package:art_mobile/core/config/service_locator.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../core/routing/app_routes.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../courses/data/models/course_model.dart';
 import '../courses/data/mock_course_service.dart';
+import 'package:art_mobile/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:art_mobile/features/supply/presentation/pages/supply_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -88,53 +90,96 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: sl<ThemeManager>(),
-      builder: (context, _) {
-        final isDark = sl<ThemeManager>().isDarkMode;
-        return Scaffold(
-          backgroundColor: isDark ? ThemeColors.backgroundDark : const Color(0xFFFBFBFB),
-          body: IndexedStack(
-            index: _selectedIndex,
-            children: [
-              _buildHomeContent(isDark),
-              const CoursesPage(),   // EXPLORE
-              const MyCoursesPage(),  // MY COURSES
-              const ProfilePage(),   // PROFILE
-              const SupplyPage(),    // SUPPLY
-            ],
-          ),
-          bottomNavigationBar: AppBottomNav(
-            selectedIndex: _selectedIndex,
-            onItemSelected: (index) {
-              setState(() {
-                _selectedIndex = index;
-              });
-            },
-          ),
-        );
-      },
+    return BlocProvider(
+      create: (context) => ProfileBloc()..add(const LoadProfile()),
+      child: AnimatedBuilder(
+        animation: sl<ThemeManager>(),
+        builder: (context, _) {
+          final isDark = sl<ThemeManager>().isDarkMode;
+          return Scaffold(
+            backgroundColor: isDark ? ThemeColors.backgroundDark : const Color(0xFFFBFBFB),
+            body: IndexedStack(
+              index: _selectedIndex,
+              children: [
+                _buildHomeContent(isDark),
+                const CoursesPage(),   // EXPLORE
+                const MyCoursesPage(),  // MY COURSES
+                const ProfilePage(),   // PROFILE
+                const SupplyPage(),    // SUPPLY
+              ],
+            ),
+            bottomNavigationBar: AppBottomNav(
+              selectedIndex: _selectedIndex,
+              onItemSelected: (index) {
+                setState(() {
+                  _selectedIndex = index;
+                });
+              },
+            ),
+          );
+        },
+      ),
     );
   }
 
   Widget _buildHomeContent(bool isDark) {
     if (_isLoading) {
-      return Center(child: CircularProgressIndicator(color: isDark ? ThemeColors.burgundyLight : const Color(0xFF6A1B9A)));
+      return Center(
+        child: CircularProgressIndicator(
+          color: isDark ? ThemeColors.burgundyLight : const Color(0xFF6A1B9A),
+        ),
+      );
     }
 
     if (_errorMessage != null) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
-          child: Text(
-            "Failed to load data:\n$_errorMessage",
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.red, fontSize: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.wifi_off_rounded, color: Colors.grey, size: 48),
+              const SizedBox(height: 16),
+              Text(
+                'Could not load home data',
+                style: TextStyle(
+                  color: isDark ? Colors.white : const Color(0xFF1A1A1A),
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _errorMessage!,
+                textAlign: TextAlign.center,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: Colors.grey, fontSize: 13),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _isLoading = true;
+                    _errorMessage = null;
+                  });
+                  _loadHomeData();
+                },
+                icon: const Icon(Icons.refresh),
+                label: const Text('Try Again'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF6A1B9A),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ],
           ),
         ),
       );
     }
 
+    // _homeData is guaranteed non-null here — all sections use safe fallbacks
     return FadeTransition(
       opacity: _fadeAnimation,
       child: SlideTransition(
@@ -148,16 +193,26 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               _buildHeader(isDark),
               const SizedBox(height: 20),
               _buildSearchBar(isDark),
-              const SizedBox(height: 24),
-              _buildBannerCarousel(isDark),
-              const SizedBox(height: 24),
-              _buildCategoryChips(isDark),
-              const SizedBox(height: 32),
-              _buildContinueLearning(isDark),
-              const SizedBox(height: 32),
-              _buildFeaturedCourses(isDark),
-              const SizedBox(height: 32),
-              _buildTopInstructors(isDark),
+              if ((_homeData?.banners ?? []).isNotEmpty) ...[  
+                const SizedBox(height: 24),
+                _buildBannerCarousel(isDark),
+              ],
+              if ((_homeData?.categories ?? []).isNotEmpty) ...[  
+                const SizedBox(height: 24),
+                _buildCategoryChips(isDark),
+              ],
+              if ((_homeData?.continueLearning ?? []).isNotEmpty) ...[  
+                const SizedBox(height: 32),
+                _buildContinueLearning(isDark),
+              ],
+              if ((_homeData?.featuredCourses ?? []).isNotEmpty) ...[  
+                const SizedBox(height: 32),
+                _buildFeaturedCourses(isDark),
+              ],
+              if ((_homeData?.instructors ?? []).isNotEmpty) ...[  
+                const SizedBox(height: 32),
+                _buildTopInstructors(isDark),
+              ],
               const SizedBox(height: 40),
             ],
           ),
@@ -167,32 +222,48 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   Widget _buildHeader(bool isDark) {
+    final hour = DateTime.now().hour;
+    String greeting;
+    if (hour < 12) {
+      greeting = 'Good Morning 👋';
+    } else if (hour < 17) {
+      greeting = 'Good Afternoon 👋';
+    } else {
+      greeting = 'Good Evening 👋';
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Good Morning 👋',
-                style: GoogleFonts.outfit(
-                  fontSize: 12,
-                  color: isDark ? Colors.grey.shade400 : const Color(0xFF757575),
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                'Priya Sharma',
-                style: GoogleFonts.outfit(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : const Color(0xFF1A1A1A),
-                ),
-              ),
-            ],
+          BlocBuilder<ProfileBloc, ProfileState>(
+            builder: (context, state) {
+              final user = state.user;
+              final name = user?.name ?? 'Learner';
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    greeting,
+                    style: GoogleFonts.outfit(
+                      fontSize: 12,
+                      color: isDark ? Colors.grey.shade400 : const Color(0xFF757575),
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    name,
+                    style: GoogleFonts.outfit(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : const Color(0xFF1A1A1A),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
           Row(
             children: [
@@ -220,22 +291,33 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 ),
               ),
               const SizedBox(width: 12),
-              Container(
-                width: 44,
-                height: 44,
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF6A1B9A), Color(0xFFAB47BC)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  shape: BoxShape.circle,
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  'P',
-                  style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-                ),
+              BlocBuilder<ProfileBloc, ProfileState>(
+                builder: (context, state) {
+                  final user = state.user;
+                  final name = user?.name ?? 'Learner';
+                  final initial = name.isNotEmpty ? name[0].toUpperCase() : 'L';
+                  final avatar = user?.avatar;
+                  return Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      gradient: avatar == null ? const LinearGradient(
+                        colors: [Color(0xFF6A1B9A), Color(0xFFAB47BC)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ) : null,
+                      image: avatar != null && avatar.isNotEmpty
+                          ? DecorationImage(image: NetworkImage(avatar), fit: BoxFit.cover)
+                          : null,
+                      shape: BoxShape.circle,
+                    ),
+                    alignment: Alignment.center,
+                    child: avatar == null ? Text(
+                      initial,
+                      style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                    ) : null,
+                  );
+                },
               ),
             ],
           ),
@@ -283,7 +365,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   Widget _buildBannerCarousel(bool isDark) {
-    final banners = _homeData!.banners;
+    final banners = _homeData?.banners ?? [];
     return Column(
       children: [
         SizedBox(
@@ -381,7 +463,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   Widget _buildCategoryChips(bool isDark) {
-    final categories = _homeData!.categories;
+    final categories = _homeData?.categories ?? [];
     return SizedBox(
       height: 42,
       child: ListView.builder(
@@ -421,7 +503,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   Widget _buildContinueLearning(bool isDark) {
-    final courses = _homeData!.continueLearning;
+    final courses = _homeData?.continueLearning ?? [];
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
@@ -527,7 +609,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 }
 
   Widget _buildFeaturedCourses(bool isDark) {
-    final courses = _homeData!.featuredCourses;
+    final courses = _homeData?.featuredCourses ?? [];
     return Column(
       children: [
         Padding(
@@ -621,7 +703,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   Widget _buildTopInstructors(bool isDark) {
-    final instructors = _homeData!.instructors;
+    final instructors = _homeData?.instructors ?? [];
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(

@@ -59,17 +59,18 @@ class AuthInterceptor extends Interceptor {
     _isRefreshing = true;
     try {
       final response = await _refreshDio.post(
-        AppConstants.refreshTokenEndpoint.replaceFirst('/', ''),
+        AppConstants.refreshTokenEndpoint,
         data: {'refresh': refreshToken},
         options: Options(
           headers: {'Content-Type': 'application/json'},
         ),
       );
 
-      final newAccess = response.data['access'] as String? ??
-          response.data['access_token'] as String?;
-      final newRefresh = response.data['refresh'] as String? ??
-          response.data['refresh_token'] as String?;
+      final responseData = response.data is Map ? (response.data['data'] ?? response.data) : response.data;
+      final newAccess = responseData['access'] as String? ??
+          responseData['access_token'] as String?;
+      final newRefresh = responseData['refresh'] as String? ??
+          responseData['refresh_token'] as String?;
 
       if (newAccess == null) {
         await secureStorage.clearAll();

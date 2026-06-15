@@ -24,6 +24,7 @@ import 'package:art_mobile/features/courses/data/repositories/course_repository_
 import 'package:art_mobile/features/subscription/data/mock_subscription_repository.dart'; // Still needed for interface
 import 'package:art_mobile/features/subscription/data/repositories/subscription_repository_impl.dart';
 import 'package:art_mobile/features/video_player/data/s3_video_service.dart';
+import 'package:art_mobile/features/video_player/data/video_progress_service.dart';
 import 'package:art_mobile/features/payment/services/razorpay_service.dart';
 
 final sl = GetIt.instance;
@@ -85,24 +86,39 @@ Future<void> setupServiceLocator() async {
     cloudFrontBaseUrl: EnvironmentConfig.cloudFrontBaseUrl,
   ));
 
+  // Video Progress Tracker
+  sl.registerSingleton<VideoProgressService>(VideoProgressService(sl<SharedPreferences>()));
+
   // Payment
   sl.registerFactory<RazorpayService>(() => RazorpayService());
 }
 
 void _setupNetworkLayer() {
-  // Dio
   final dio = Dio();
-  
-  // Bypass SSL certificate validation for development backend
-  dio.httpClientAdapter = IOHttpClientAdapter(
-    createHttpClient: () {
-      final client = HttpClient();
-      client.badCertificateCallback = (X509Certificate cert, String host, int port) => true;
-      return client;
-    },
-  );
 
-  // Interceptors
+  // ---------------------------------------------------------------------------
+  // SSL Certificate validation
+  // ---------------------------------------------------------------------------
+  // Only bypass SSL in development (local servers / ngrok without a valid cert).
+  // In staging and production we connect to https://api.gloriousartcreations.com
+  // which has a valid TLS certificate — strict validation must be ON.
+  // EnvironmentConfig.allowSelfSignedCertificates returns true ONLY when
+  // ENV=development (i.e. the default `flutter run` without any --dart-define).
+  // ---------------------------------------------------------------------------
+  if (EnvironmentConfig.allowSelfSignedCertificates) {
+    dio.httpClientAdapter = IOHttpClientAdapter(
+      createHttpClient: () {
+        final client = HttpClient()
+          ..badCertificateCallback =
+              (X509Certificate cert, String host, int port) => true;
+        return client;
+      },
+    );
+  }
+
+  // Interceptors — auth token injection, retry logic, and error mapping.
+  // Network logs are only added in development/staging to avoid leaking
+  // request bodies and tokens in production logcat output.
   dio.interceptors.addAll([
     AuthInterceptor(secureStorage: sl<SecureStorageService>(), dio: dio),
     RetryInterceptor(dio: dio),
@@ -110,7 +126,5 @@ void _setupNetworkLayer() {
   ]);
 
   sl.registerSingleton<Dio>(dio);
-
-  // API Client
   sl.registerSingleton<ApiClient>(ApiClient(dio: dio));
 }
