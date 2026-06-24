@@ -36,4 +36,18 @@ class NotificationModel {
       read: read ?? this.read,
     );
   }
+
+  factory NotificationModel.fromJson(Map<String, dynamic> json) {
+    return NotificationModel(
+      id: json['id'] as String,
+      type: NotificationType.values.firstWhere(
+        (e) => e.name == json['type'],
+        orElse: () => NotificationType.promo,
+      ),
+      title: json['title'] as String,
+      body: json['body'] as String,
+      time: json['time'] as String,
+      read: json['read'] as bool? ?? false,
+    );
+  }
 }

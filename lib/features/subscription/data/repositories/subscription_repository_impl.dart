@@ -1,5 +1,5 @@
 import 'package:art_mobile/core/network/api_client.dart';
-import 'package:art_mobile/features/subscription/data/mock_subscription_repository.dart';
+import 'package:art_mobile/features/subscription/domain/repositories/subscription_repository.dart';
 import 'package:art_mobile/features/subscription/data/models/subscription_model.dart';
 
 class SubscriptionRepositoryImpl implements ISubscriptionRepository {

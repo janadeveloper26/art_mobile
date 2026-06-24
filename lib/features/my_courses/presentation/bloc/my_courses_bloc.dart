@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../../data/models/my_courses_model.dart';
-import '../../../courses/data/mock_course_service.dart';
+import '../../../courses/domain/repositories/course_repository.dart';
 
 // Events
 abstract class MyCoursesEvent extends Equatable {

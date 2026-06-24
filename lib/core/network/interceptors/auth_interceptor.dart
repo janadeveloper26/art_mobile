@@ -5,6 +5,7 @@ import 'package:dio/io.dart';
 import 'package:flutter/foundation.dart';
 import 'package:art_mobile/core/storage/secure_storage_service.dart';
 import 'package:art_mobile/core/constants/app_constants.dart';
+import 'package:art_mobile/core/config/environment.dart';
 
 class AuthInterceptor extends Interceptor {
   final Dio dio;
@@ -17,8 +18,9 @@ class AuthInterceptor extends Interceptor {
     _refreshDio.httpClientAdapter = IOHttpClientAdapter(
       createHttpClient: () {
         final client = HttpClient();
-        client.badCertificateCallback =
-            (X509Certificate cert, String host, int port) => true;
+        // OLD LOGIC: client.badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+        client.badCertificateCallback = (X509Certificate cert, String host, int port) =>
+            EnvironmentConfig.allowSelfSignedCertificates;
         return client;
       },
     );

@@ -12,7 +12,7 @@ import 'package:art_mobile/features/auth/data/models/auth_models.dart';
 import 'package:art_mobile/features/payment/services/razorpay_service.dart';
 import 'package:art_mobile/features/video_player/data/video_progress_service.dart';
 import '../../data/models/course_model.dart';
-import '../../data/mock_course_service.dart';
+import '../../domain/repositories/course_repository.dart';
 import '../bloc/course_detail/course_detail_bloc.dart';
 
 class CourseDetailPage extends StatelessWidget {

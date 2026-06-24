@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:art_mobile/features/notifications/domain/repositories/notifications_repository.dart';
 import '../../domain/models/notification_model.dart';
 
 // EVENTS
@@ -73,7 +74,9 @@ class NotificationsState extends Equatable {
 
 // BLOC
 class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
-  NotificationsBloc() : super(const NotificationsState()) {
+  final INotificationsRepository repository;
+
+  NotificationsBloc(this.repository) : super(const NotificationsState()) {
     on<LoadNotifications>(_onLoadNotifications);
     on<MarkRead>(_onMarkRead);
     on<MarkAllAsRead>(_onMarkAllAsRead);
@@ -81,70 +84,14 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
     on<SetFilter>((event, emit) => emit(state.copyWith(filter: event.filter)));
   }
 
-  void _onLoadNotifications(LoadNotifications event, Emitter<NotificationsState> emit) {
+  Future<void> _onLoadNotifications(LoadNotifications event, Emitter<NotificationsState> emit) async {
     emit(state.copyWith(isLoading: true));
-    
-    // Mock Data
-    final mockNotifs = [
-      const NotificationModel(
-        id: "n1",
-        type: NotificationType.lesson,
-        title: "New Lesson Available",
-        body: "\"Chain Stitch Basics\" in Aari Embroidery Masterclass is now live!",
-        time: "Just now",
-        read: false,
-      ),
-      const NotificationModel(
-        id: "n2",
-        type: NotificationType.live,
-        title: "Live Class Starting Soon",
-        body: "Priya Sharma's Live Bridal Embroidery session starts in 30 mins!",
-        time: "28 min ago",
-        read: false,
-      ),
-      const NotificationModel(
-        id: "n3",
-        type: NotificationType.achievement,
-        title: "🏆 Achievement Unlocked!",
-        body: "You completed 50% of Aari Embroidery Masterclass. Keep going!",
-        time: "2 hours ago",
-        read: false,
-      ),
-      const NotificationModel(
-        id: "n4",
-        type: NotificationType.promo,
-        title: "Special Offer — 50% Off!",
-        body: "Bridal Blouse Design course is 50% off for the next 24 hours. Use code AARI10.",
-        time: "Yesterday",
-        read: true,
-      ),
-      const NotificationModel(
-        id: "n5",
-        type: NotificationType.payment,
-        title: "Subscription Renewed",
-        body: "Your Yearly Premium plan has been successfully renewed for ₹1,999.",
-        time: "2 days ago",
-        read: true,
-      ),
-      const NotificationModel(
-        id: "n6",
-        type: NotificationType.review,
-        title: "Your Review Was Helpful!",
-        body: "12 students found your review of \"Zari & Silk Thread Embroidery\" helpful.",
-        time: "3 days ago",
-        read: true,
-      ),
-      const NotificationModel(
-        id: "n7",
-        type: NotificationType.lesson,
-        title: "Resume Where You Left Off",
-        body: "You were 70% through \"Introduction to Aari Hook\". Continue now!",
-        time: "5 days ago",
-        read: true,
-      ),
-    ];
-
-    emit(state.copyWith(notifications: mockNotifs, isLoading: false));
+    try {
+      final notifications = await repository.getNotifications();
+      emit(state.copyWith(notifications: notifications, isLoading: false));
+    } catch (e) {
+      emit(state.copyWith(isLoading: false));
+    }
   }
 
   void _onMarkRead(MarkRead event, Emitter<NotificationsState> emit) {

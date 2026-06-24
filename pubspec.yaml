@@ -73,6 +73,10 @@ dependencies:
   flutter_local_notifications: ^21.0.0
   firebase_auth: ^6.4.0
   google_sign_in: ^7.2.0
+  firebase_crashlytics: ^4.2.0
+  freerasp: ^6.2.0
+  http_certificate_pinning: ^3.1.2
+  dio_smart_retry: ^6.0.0
   device_info_plus: ^12.4.0
   uuid: ^4.5.3
 

@@ -1,11 +1,13 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:art_mobile/features/supply/data/mock_supply_data.dart';
+import 'package:art_mobile/features/supply/domain/repositories/supply_repository.dart';
 import 'package:art_mobile/features/supply/data/models/product_model.dart';
 import 'supply_event.dart';
 import 'supply_state.dart';
 
 class SupplyBloc extends Bloc<SupplyEvent, SupplyState> {
-  SupplyBloc() : super(const SupplyState()) {
+  final ISupplyRepository repository;
+
+  SupplyBloc(this.repository) : super(const SupplyState()) {
     on<LoadProducts>(_onLoadProducts);
     on<CategoryChanged>(_onCategoryChanged);
     on<SearchQueryChanged>(_onSearchQueryChanged);
@@ -14,13 +16,18 @@ class SupplyBloc extends Bloc<SupplyEvent, SupplyState> {
     on<UpdateCartQty>(_onUpdateCartQty);
   }
 
-  void _onLoadProducts(LoadProducts event, Emitter<SupplyState> emit) {
+  Future<void> _onLoadProducts(LoadProducts event, Emitter<SupplyState> emit) async {
     emit(state.copyWith(isLoading: true));
-    // Simulate network delay
-    emit(state.copyWith(
-      products: MockSupplyData.products,
-      isLoading: false,
-    ));
+    try {
+      final products = await repository.getProducts();
+      emit(state.copyWith(
+        products: products,
+        isLoading: false,
+      ));
+    } catch (e) {
+      // In a real app, emit error state. Here we'll just stop loading.
+      emit(state.copyWith(isLoading: false));
+    }
   }
 
   void _onCategoryChanged(CategoryChanged event, Emitter<SupplyState> emit) {

@@ -6,7 +6,7 @@ import 'package:art_mobile/core/config/service_locator.dart';
 import 'package:art_mobile/core/theme/theme_colors.dart';
 import 'package:art_mobile/core/theme/theme_manager.dart';
 import '../../data/models/subscription_model.dart';
-import '../../data/mock_subscription_repository.dart';
+import '../../domain/repositories/subscription_repository.dart';
 import '../bloc/subscription_bloc.dart';
 
 class SubscriptionPage extends StatelessWidget {

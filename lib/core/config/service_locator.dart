@@ -19,10 +19,14 @@ import 'package:art_mobile/features/auth/domain/repositories/auth_repository.dar
 import 'package:art_mobile/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:art_mobile/features/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:art_mobile/features/auth/services/firebase_auth_service.dart';
-import 'package:art_mobile/features/courses/data/mock_course_service.dart'; // Still needed for interface
+import 'package:art_mobile/features/courses/domain/repositories/course_repository.dart';
 import 'package:art_mobile/features/courses/data/repositories/course_repository_impl.dart';
-import 'package:art_mobile/features/subscription/data/mock_subscription_repository.dart'; // Still needed for interface
+import 'package:art_mobile/features/subscription/domain/repositories/subscription_repository.dart';
 import 'package:art_mobile/features/subscription/data/repositories/subscription_repository_impl.dart';
+import 'package:art_mobile/features/supply/domain/repositories/supply_repository.dart';
+import 'package:art_mobile/features/supply/data/repositories/supply_repository_impl.dart';
+import 'package:art_mobile/features/notifications/domain/repositories/notifications_repository.dart';
+import 'package:art_mobile/features/notifications/data/repositories/notifications_repository_impl.dart';
 import 'package:art_mobile/features/video_player/data/s3_video_service.dart';
 import 'package:art_mobile/features/video_player/data/video_progress_service.dart';
 import 'package:art_mobile/features/payment/services/razorpay_service.dart';
@@ -77,6 +81,14 @@ Future<void> setupServiceLocator() async {
 
   sl.registerLazySingleton<ISubscriptionRepository>(
     () => SubscriptionRepositoryImpl(apiClient: sl<ApiClient>()),
+  );
+
+  sl.registerLazySingleton<ISupplyRepository>(
+    () => SupplyRepositoryImpl(apiClient: sl<ApiClient>()),
+  );
+
+  sl.registerLazySingleton<INotificationsRepository>(
+    () => NotificationsRepositoryImpl(apiClient: sl<ApiClient>()),
   );
 
   // Video Player — Production S3/CloudFront URL service

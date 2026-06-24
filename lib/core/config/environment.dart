@@ -45,9 +45,10 @@ class EnvironmentConfig {
   // ---------------------------------------------------------------------------
 
   /// Reads the ENV dart-define at compile time.
-  /// Defaults to 'development' when running `flutter run` without flags.
+  /// Defaults to 'production' for safety.
+  // OLD LOGIC: static const String _envString = String.fromEnvironment('ENV', defaultValue: 'development');
   static const String _envString =
-      String.fromEnvironment('ENV', defaultValue: 'development');
+      String.fromEnvironment('ENV', defaultValue: 'production');
 
   static Environment get env {
     switch (_envString) {

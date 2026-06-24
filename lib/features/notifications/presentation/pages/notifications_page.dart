@@ -5,6 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:art_mobile/core/theme/theme_manager.dart';
 import 'package:art_mobile/core/config/service_locator.dart';
+import 'package:art_mobile/features/notifications/domain/repositories/notifications_repository.dart';
+import 'package:art_mobile/core/config/service_locator.dart';
 import 'package:art_mobile/core/theme/theme_colors.dart';
 import '../bloc/notifications_bloc.dart';
 import '../../domain/models/notification_model.dart';
@@ -18,7 +20,7 @@ class NotificationsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => NotificationsBloc()..add(LoadNotifications()),
+      create: (context) => NotificationsBloc(sl<INotificationsRepository>())..add(LoadNotifications()),
       child: const NotificationsView(),
     );
   }

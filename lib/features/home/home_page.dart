@@ -12,7 +12,7 @@ import '../../core/theme/theme_colors.dart';
 import '../../core/routing/app_routes.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../courses/data/models/course_model.dart';
-import '../courses/data/mock_course_service.dart';
+import '../courses/domain/repositories/course_repository.dart';
 import 'package:art_mobile/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:art_mobile/features/supply/presentation/pages/supply_page.dart';
 

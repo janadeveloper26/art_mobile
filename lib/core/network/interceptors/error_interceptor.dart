@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:logger/logger.dart';
+import 'package:art_mobile/core/config/environment.dart';
 
 class ErrorInterceptor extends QueuedInterceptor {
   final logger = Logger();
@@ -8,11 +9,22 @@ class ErrorInterceptor extends QueuedInterceptor {
   void onError(DioException err, ErrorInterceptorHandler handler) {
     String message = _getErrorMessage(err);
 
-    logger.e(
-      'API Error: ${err.response?.statusCode} - $message'
-      '\nURL: ${err.requestOptions.path}'
-      '\nResponse body: ${err.response?.data}',
-    );
+    // OLD LOGIC:
+    // logger.e(
+    //   'API Error: ${err.response?.statusCode} - $message'
+    //   '\nURL: ${err.requestOptions.path}'
+    //   '\nResponse body: ${err.response?.data}',
+    // );
+    
+    if (EnvironmentConfig.enableNetworkLogs) {
+      logger.e(
+        'API Error: ${err.response?.statusCode} - $message'
+        '\nURL: ${err.requestOptions.path}'
+        '\nResponse body: ${err.response?.data}',
+      );
+    } else {
+      logger.e('API Error: ${err.response?.statusCode} - $message | URL: ${err.requestOptions.path}');
+    }
 
     return handler.next(err);
   }

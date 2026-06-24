@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../../data/models/subscription_model.dart';
-import '../../data/mock_subscription_repository.dart';
+import '../../domain/repositories/subscription_repository.dart';
 
 // Events
 abstract class SubscriptionEvent extends Equatable {

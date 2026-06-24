@@ -8,7 +8,7 @@ import 'package:art_mobile/core/theme/theme_colors.dart';
 import 'package:art_mobile/core/theme/theme_manager.dart';
 import 'package:art_mobile/core/config/service_locator.dart';
 import 'package:art_mobile/features/courses/data/models/course_model.dart';
-import 'package:art_mobile/features/courses/data/mock_course_service.dart';
+import 'package:art_mobile/features/courses/domain/repositories/course_repository.dart';
 import 'package:art_mobile/features/video_player/data/video_progress_service.dart';
 import 'package:art_mobile/features/video_player/data/s3_video_service.dart';
 import '../bloc/video_player_bloc.dart';

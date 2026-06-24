@@ -33,6 +33,24 @@ class Product extends Equatable {
 
   @override
   List<Object?> get props => [id, name, subtitle, category, price, originalPrice, rating, reviews, image, badge, badgeColor, inStock, tags];
+
+  factory Product.fromJson(Map<String, dynamic> json) {
+    return Product(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      subtitle: json['subtitle'] as String? ?? '',
+      category: json['category'] as String,
+      price: (json['price'] as num).toDouble(),
+      originalPrice: json['originalPrice'] != null ? (json['originalPrice'] as num).toDouble() : null,
+      rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
+      reviews: json['reviews'] as int? ?? 0,
+      image: json['imageUrl'] as String? ?? json['image'] as String? ?? '',
+      badge: json['badge'] as String?,
+      badgeColor: json['badgeColor'] as String?,
+      inStock: json['inStock'] as bool? ?? true,
+      tags: (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList() ?? [],
+    );
+  }
 }
 
 class CartItem extends Equatable {

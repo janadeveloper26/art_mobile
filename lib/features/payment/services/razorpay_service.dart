@@ -37,13 +37,13 @@ class RazorpayService {
     String? userEmail,
     String? userId,
   }) {
-    if (_key == 'rzp_test_1DP5mmOlF5G5ag') {
-      // Simulate success for default test key to avoid network timeout errors
-      Future.delayed(const Duration(seconds: 2), () {
-        onSuccess?.call(PaymentSuccessResponse('pay_simulated_${DateTime.now().millisecondsSinceEpoch}', 'ord_simulated', 'sig_simulated', null));
-      });
-      return;
-    }
+    // if (_key.startsWith('rzp_test_')) {
+    //   // Simulate success for any test key to avoid network timeout errors
+    //   Future.delayed(const Duration(seconds: 2), () {
+    //     onSuccess?.call(PaymentSuccessResponse('pay_simulated_${DateTime.now().millisecondsSinceEpoch}', 'ord_simulated', 'sig_simulated', null));
+    //   });
+    //   return;
+    // }
 
     final options = <String, dynamic>{
       'key': _key,

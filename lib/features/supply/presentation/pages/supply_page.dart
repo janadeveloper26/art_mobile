@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:art_mobile/core/theme/theme_manager.dart';
+import 'package:art_mobile/core/config/service_locator.dart';
+import 'package:art_mobile/features/supply/domain/repositories/supply_repository.dart';
 import 'package:art_mobile/core/theme/theme_colors.dart';
 import 'package:art_mobile/core/config/service_locator.dart';
 import 'package:art_mobile/features/supply/data/models/product_model.dart';
@@ -23,7 +25,7 @@ class _SupplyPageState extends State<SupplyPage> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => SupplyBloc()..add(LoadProducts()),
+      create: (context) => SupplyBloc(sl<ISupplyRepository>())..add(LoadProducts()),
       child: AnimatedBuilder(
         animation: sl<ThemeManager>(),
         builder: (context, _) {
