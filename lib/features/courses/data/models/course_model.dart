@@ -17,6 +17,7 @@ class CourseDetail {
   final String image;
   final String videoUrl;
   final bool isWishlisted;
+  final bool isEnrolled;
   final List<CurriculumSection> curriculum;
   final List<CourseReview> reviewsList;
 
@@ -39,6 +40,7 @@ class CourseDetail {
     required this.image,
     this.videoUrl = '',
     this.isWishlisted = false,
+    this.isEnrolled = false,
     required this.curriculum,
     required this.reviewsList,
   });
@@ -73,6 +75,7 @@ class CourseDetail {
             json['promo_video_url'],
       ),
       isWishlisted: json['is_wishlisted'] as bool? ?? false,
+      isEnrolled: json['is_enrolled'] as bool? ?? false,
       curriculum: curriculumJson.map(_mapFromAny).whereType<Map<String, dynamic>>().map(CurriculumSection.fromJson).toList(),
       reviewsList: reviewsJson.map(_mapFromAny).whereType<Map<String, dynamic>>().map(CourseReview.fromJson).toList(),
     );

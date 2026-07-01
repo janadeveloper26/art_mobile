@@ -170,18 +170,7 @@ class _LoginViewState extends State<LoginView> with SingleTickerProviderStateMix
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 16),
-                      // Quick Sign In
-                      Text('QUICK SIGN IN', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w800, color: const Color(0xFF9E9E9E), letterSpacing: 0.8)),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          _buildQuickAccount('👩', 'Priya Sharma', '9876543210', state.phoneNumber == '9876543210'),
-                          const SizedBox(width: 12),
-                          _buildQuickAccount('👩‍🦱', 'Meena Devi', '9123456789', state.phoneNumber == '9123456789'),
-                        ],
-                      ),
-
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
 
                       // Google Sign In
                       _buildGoogleButton(context, state),
@@ -242,32 +231,7 @@ class _LoginViewState extends State<LoginView> with SingleTickerProviderStateMix
     );
   }
 
-  Widget _buildQuickAccount(String emoji, String name, String phone, bool isActive) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          _phoneController.text = phone;
-          context.read<LoginBloc>().add(PhoneNumberChanged(phone));
-        },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-          decoration: BoxDecoration(
-            color: isActive ? const Color(0xFF6A1B9A).withOpacity(0.08) : const Color(0xFFF8F6FB),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: isActive ? const Color(0xFF6A1B9A).withOpacity(0.3) : Colors.transparent, width: 1.5),
-          ),
-          child: Column(
-            children: [
-              Text(emoji, style: const TextStyle(fontSize: 24)),
-              const SizedBox(height: 4),
-              Text(name, style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: isActive ? const Color(0xFF6A1B9A) : const Color(0xFF212121))),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+
 
   Widget _buildGoogleButton(BuildContext context, LoginState state) {
     return GestureDetector(

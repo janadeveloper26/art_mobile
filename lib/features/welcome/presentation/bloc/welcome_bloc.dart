@@ -9,6 +9,7 @@ abstract class WelcomeEvent extends Equatable {
 }
 
 class GetStartedPressed extends WelcomeEvent {}
+
 class AlreadyHaveAccountPressed extends WelcomeEvent {}
 
 // STATES
@@ -19,7 +20,9 @@ abstract class WelcomeState extends Equatable {
 }
 
 class WelcomeInitial extends WelcomeState {}
+
 class NavigateToOnboarding extends WelcomeState {}
+
 class NavigateToLogin extends WelcomeState {}
 
 // BLOC

@@ -204,10 +204,15 @@ class _SplashViewState extends State<SplashView> with TickerProviderStateMixin {
                         borderRadius: BorderRadius.circular(28),
                         child: BackdropFilter(
                           filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                          child: const Center(
-                            child: Text(
-                              '🪡',
-                              style: TextStyle(fontSize: 52),
+                          child: Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Image.asset(
+                                'assets/images/logo.png',
+                                width: 60,
+                                height: 60,
+                                fit: BoxFit.contain,
+                              ),
                             ),
                           ),
                         ),

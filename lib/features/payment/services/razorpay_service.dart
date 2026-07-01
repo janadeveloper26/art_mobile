@@ -3,13 +3,6 @@ import 'package:razorpay_flutter/razorpay_flutter.dart';
 /// Razorpay payment service for course enrollment.
 /// Pass --dart-define=RAZORPAY_KEY=rzp_live_xxx at build time to override.
 class RazorpayService {
-  // Read at compile time via --dart-define=RAZORPAY_KEY=...
-  // Default is Razorpay test key — REPLACE before going live.
-  static const String _key = String.fromEnvironment(
-    'RAZORPAY_KEY',
-    defaultValue: 'rzp_test_1DP5mmOlF5G5ag', // Test Key
-  );
-
   final Razorpay _razorpay = Razorpay();
 
   // Callbacks to be set by the caller
@@ -24,31 +17,18 @@ class RazorpayService {
   }
 
   /// Opens the Razorpay checkout sheet.
-  ///
-  /// [amountInRupees] — e.g. 999.0
-  /// [courseName]     — shown in the checkout description
-  /// [userPhone]      — pre-fills the phone field (with country code, e.g. +919876543210)
-  /// [userEmail]      — pre-fills the email field
-  /// [userId]         — used in notes for webhook identification
   void openCheckout({
-    required double amountInRupees,
+    required String gatewayKey,
+    String? orderId,
+    String? subscriptionId,
+    double? amountInRupees,
     required String courseName,
     required String userPhone,
     String? userEmail,
     String? userId,
   }) {
-    // if (_key.startsWith('rzp_test_')) {
-    //   // Simulate success for any test key to avoid network timeout errors
-    //   Future.delayed(const Duration(seconds: 2), () {
-    //     onSuccess?.call(PaymentSuccessResponse('pay_simulated_${DateTime.now().millisecondsSinceEpoch}', 'ord_simulated', 'sig_simulated', null));
-    //   });
-    //   return;
-    // }
-
     final options = <String, dynamic>{
-      'key': _key,
-      // Razorpay expects amount in **paise** (multiply rupees by 100)
-      'amount': (amountInRupees * 100).toInt(),
+      'key': gatewayKey,
       'currency': 'INR',
       'name': 'AariLearn',
       'description': courseName,
@@ -63,10 +43,17 @@ class RazorpayService {
       'theme': {
         'color': '#6A1B9A',
       },
-      // Webhook verification is done server-side using your Razorpay webhook secret
-      // Configure webhook at: https://dashboard.razorpay.com/app/webhooks
-      // Event: payment.captured → POST /api/v1/payments/webhook/razorpay
     };
+
+    if (orderId != null) {
+      options['order_id'] = orderId;
+    }
+    
+    if (subscriptionId != null) {
+      options['subscription_id'] = subscriptionId;
+    } else if (amountInRupees != null) {
+      options['amount'] = (amountInRupees * 100).toInt();
+    }
 
     try {
       _razorpay.open(options);

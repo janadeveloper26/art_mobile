@@ -5,6 +5,11 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:art_mobile/core/config/service_locator.dart';
 import 'package:art_mobile/core/theme/theme_colors.dart';
 import 'package:art_mobile/core/theme/theme_manager.dart';
+import 'package:art_mobile/core/storage/secure_storage_service.dart';
+import 'package:art_mobile/features/auth/data/models/auth_models.dart';
+import 'package:art_mobile/features/payment/services/razorpay_service.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
+import 'package:art_mobile/features/payment/domain/repositories/payment_repository.dart';
 import '../../data/models/subscription_model.dart';
 import '../../domain/repositories/subscription_repository.dart';
 import '../bloc/subscription_bloc.dart';
@@ -15,7 +20,7 @@ class SubscriptionPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => SubscriptionBloc(sl<ISubscriptionRepository>())..add(LoadSubscriptionData()),
+      create: (context) => SubscriptionBloc(sl<ISubscriptionRepository>(), sl<IPaymentRepository>())..add(LoadSubscriptionData()),
       child: const SubscriptionView(),
     );
   }
@@ -31,6 +36,7 @@ class SubscriptionView extends StatefulWidget {
 class _SubscriptionViewState extends State<SubscriptionView> with TickerProviderStateMixin {
   late AnimationController _headerController;
   late Animation<double> _headerScale;
+  late RazorpayService _razorpayService;
 
   @override
   void initState() {
@@ -43,12 +49,64 @@ class _SubscriptionViewState extends State<SubscriptionView> with TickerProvider
       CurvedAnimation(parent: _headerController, curve: Curves.easeOut),
     );
     _headerController.forward();
+
+    // Setup Razorpay
+    _razorpayService = sl<RazorpayService>();
+    _razorpayService.onSuccess = _handlePaymentSuccess;
+    _razorpayService.onFailure = _handlePaymentFailure;
+    _razorpayService.onExternalWallet = _handleExternalWallet;
   }
 
   @override
   void dispose() {
     _headerController.dispose();
+    _razorpayService.dispose();
     super.dispose();
+  }
+
+  // ─── Razorpay callbacks ───────────────────────────────────────────────────
+
+  void _handlePaymentSuccess(PaymentSuccessResponse response) {
+    context.read<SubscriptionBloc>().add(VerifySubscriptionPayment(
+      razorpaySubscriptionId: response.orderId ?? '', // orderId holds subscription_id in SDK
+      razorpayPaymentId: response.paymentId ?? '',
+      razorpaySignature: response.signature ?? '',
+    ));
+  }
+
+  void _handlePaymentFailure(PaymentFailureResponse response) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: const Color(0xFFEF4444),
+        content: Text(
+          response.message ?? 'Payment failed. Please try again.',
+          style: GoogleFonts.outfit(color: Colors.white, fontSize: 13),
+        ),
+      ),
+    );
+  }
+
+  void _handleExternalWallet(ExternalWalletResponse response) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('External wallet selected: ${response.walletName}')),
+    );
+  }
+
+  Future<void> _startSubscription(String planId) async {
+    context.read<SubscriptionBloc>().add(CreateSubscriptionOrder(planId));
+  }
+
+  Future<void> _openRazorpay(SubscriptionLoaded state, String gatewayKey, String subscriptionId) async {
+    final userDataJson = await sl<SecureStorageService>().getUserData();
+    final userData = UserData.fromJsonString(userDataJson);
+    _razorpayService.openCheckout(
+      gatewayKey: gatewayKey,
+      subscriptionId: subscriptionId,
+      courseName: 'Premium Subscription',
+      userPhone: userData?.phone ?? '',
+      userEmail: userData?.email,
+      userId: userData?.id,
+    );
   }
 
   @override
@@ -56,14 +114,39 @@ class _SubscriptionViewState extends State<SubscriptionView> with TickerProvider
     final isDark = sl<ThemeManager>().isDarkMode;
     return Scaffold(
       backgroundColor: isDark ? ThemeColors.backgroundDark : Colors.white,
-      body: BlocBuilder<SubscriptionBloc, SubscriptionState>(
+      body: BlocConsumer<SubscriptionBloc, SubscriptionState>(
+        listener: (context, state) {
+          if (state is SubscriptionLoaded) {
+            if (state.createdOrder != null && !state.isProcessingPayment) {
+              _openRazorpay(state, state.createdOrder!.gatewayKey, state.createdOrder!.subscriptionId);
+            }
+            if (state.paymentError != null && !state.isProcessingPayment) {
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.paymentError!)));
+            }
+            if (state.paymentSuccess && !state.isProcessingPayment) {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Subscription activated successfully!'), backgroundColor: Colors.green));
+              Navigator.pop(context, true); // Pop back and refresh data
+            }
+          }
+        },
         builder: (context, state) {
           if (state is SubscriptionLoading) {
             return Center(child: CircularProgressIndicator(color: isDark ? ThemeColors.burgundyLight : const Color(0xFF6A1B9A)));
           }
 
           if (state is SubscriptionLoaded) {
-            return _buildContent(context, state, isDark);
+            return Stack(
+              children: [
+                _buildContent(context, state, isDark),
+                if (state.isProcessingPayment)
+                  Container(
+                    color: Colors.black45,
+                    child: Center(
+                      child: CircularProgressIndicator(color: isDark ? ThemeColors.burgundyLight : const Color(0xFF6A1B9A)),
+                    ),
+                  ),
+              ],
+            );
           }
 
           if (state is SubscriptionError) {
@@ -243,7 +326,12 @@ class _SubscriptionViewState extends State<SubscriptionView> with TickerProvider
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {},
+          onTap: () {
+            final state = context.read<SubscriptionBloc>().state;
+            if (state is SubscriptionLoaded && !state.isProcessingPayment) {
+              _startSubscription(plan.id);
+            }
+          },
           borderRadius: BorderRadius.circular(20),
           child: Center(child: Text('UNLOCK ALL ACCESS · ₹${plan.price}', style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1))),
         ),

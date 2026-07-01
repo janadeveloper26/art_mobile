@@ -13,6 +13,8 @@ import 'package:art_mobile/core/theme/theme_manager.dart';
 import 'package:art_mobile/core/config/environment.dart';
 import 'package:art_mobile/core/services/device_service.dart';
 import 'package:art_mobile/core/services/fcm_service.dart';
+import 'package:http_certificate_pinning/http_certificate_pinning.dart';
+import 'package:flutter/foundation.dart';
 
 // Features
 import 'package:art_mobile/features/auth/domain/repositories/auth_repository.dart';
@@ -30,6 +32,8 @@ import 'package:art_mobile/features/notifications/data/repositories/notification
 import 'package:art_mobile/features/video_player/data/s3_video_service.dart';
 import 'package:art_mobile/features/video_player/data/video_progress_service.dart';
 import 'package:art_mobile/features/payment/services/razorpay_service.dart';
+import 'package:art_mobile/features/payment/domain/repositories/payment_repository.dart';
+import 'package:art_mobile/features/payment/data/repositories/payment_repository_impl.dart';
 
 final sl = GetIt.instance;
 
@@ -101,6 +105,11 @@ Future<void> setupServiceLocator() async {
   // Video Progress Tracker
   sl.registerSingleton<VideoProgressService>(VideoProgressService(sl<SharedPreferences>()));
 
+  // Payment Repository
+  sl.registerLazySingleton<IPaymentRepository>(
+    () => PaymentRepositoryImpl(apiClient: sl<ApiClient>()),
+  );
+
   // Payment
   sl.registerFactory<RazorpayService>(() => RazorpayService());
 }
@@ -131,6 +140,16 @@ void _setupNetworkLayer() {
   // Interceptors — auth token injection, retry logic, and error mapping.
   // Network logs are only added in development/staging to avoid leaking
   // request bodies and tokens in production logcat output.
+  
+  if (!kDebugMode && !EnvironmentConfig.allowSelfSignedCertificates) {
+    dio.interceptors.add(
+      CertificatePinningInterceptor(allowedSHAFingerprints: [
+        // TODO: Replace with your actual server SHA-256 fingerprint
+        "XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX"
+      ]),
+    );
+  }
+
   dio.interceptors.addAll([
     AuthInterceptor(secureStorage: sl<SecureStorageService>(), dio: dio),
     RetryInterceptor(dio: dio),

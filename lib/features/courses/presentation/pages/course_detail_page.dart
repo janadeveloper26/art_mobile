@@ -15,6 +15,8 @@ import '../../data/models/course_model.dart';
 import '../../domain/repositories/course_repository.dart';
 import '../bloc/course_detail/course_detail_bloc.dart';
 
+import 'package:art_mobile/features/payment/domain/repositories/payment_repository.dart';
+
 class CourseDetailPage extends StatelessWidget {
   final String courseId;
 
@@ -23,7 +25,7 @@ class CourseDetailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => CourseDetailBloc(sl<ICourseRepository>())..add(LoadCourseDetail(courseId)),
+      create: (context) => CourseDetailBloc(sl<ICourseRepository>(), sl<IPaymentRepository>())..add(LoadCourseDetail(courseId)),
       child: const CourseDetailView(),
     );
   }
@@ -74,47 +76,11 @@ class _CourseDetailViewState extends State<CourseDetailView> with TickerProvider
   // ─── Razorpay callbacks ───────────────────────────────────────────────────
 
   void _handlePaymentSuccess(PaymentSuccessResponse response) {
-    setState(() => _enrollLoading = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: const Color(0xFF10B981),
-        content: Row(
-          children: [
-            const Icon(Icons.check_circle_rounded, color: Colors.white),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'Payment successful! Payment ID: ${response.paymentId}',
-                style: GoogleFonts.outfit(color: Colors.white, fontSize: 13),
-              ),
-            ),
-          ],
-        ),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
-
-    final state = context.read<CourseDetailBloc>().state;
-    if (state is CourseDetailLoaded) {
-      final firstSection = state.course.curriculum.isNotEmpty ? state.course.curriculum.first : null;
-      final firstLesson = firstSection?.lessons.isNotEmpty == true ? firstSection!.lessons.first : null;
-      
-      if (firstLesson != null && firstLesson.videoUrl.isNotEmpty) {
-        Future.delayed(const Duration(seconds: 1), () {
-          if (!mounted) return;
-          Navigator.pushNamed(
-            context,
-            AppRoutes.videoPlayer,
-            arguments: {
-              'courseId': state.course.id,
-              'videoId': firstLesson.id,
-              'videoUrl': firstLesson.videoUrl,
-            },
-          ).then((_) => setState(() {}));
-        });
-      }
-    }
+    context.read<CourseDetailBloc>().add(VerifyCoursePayment(
+      razorpayOrderId: response.orderId ?? '',
+      razorpayPaymentId: response.paymentId ?? '',
+      razorpaySignature: response.signature ?? '',
+    ));
   }
 
   void _handlePaymentFailure(PaymentFailureResponse response) {
@@ -154,20 +120,21 @@ class _CourseDetailViewState extends State<CourseDetailView> with TickerProvider
   }
 
   Future<void> _startEnrollment(CourseDetail course) async {
-    setState(() => _enrollLoading = true);
-    try {
-      final userDataJson = await sl<SecureStorageService>().getUserData();
-      final userData = UserData.fromJsonString(userDataJson);
-      _razorpayService.openCheckout(
-        amountInRupees: course.price.toDouble(),
-        courseName: course.title,
-        userPhone: userData?.phone ?? '',
-        userEmail: userData?.email,
-        userId: userData?.id,
-      );
-    } catch (e) {
-      setState(() => _enrollLoading = false);
-    }
+    context.read<CourseDetailBloc>().add(CreateCourseOrder(course.id));
+  }
+
+  Future<void> _openRazorpay(CourseDetail course, String gatewayKey, String orderId) async {
+    final userDataJson = await sl<SecureStorageService>().getUserData();
+    final userData = UserData.fromJsonString(userDataJson);
+    _razorpayService.openCheckout(
+      gatewayKey: gatewayKey,
+      orderId: orderId,
+      amountInRupees: course.price.toDouble(),
+      courseName: course.title,
+      userPhone: userData?.phone ?? '',
+      userEmail: userData?.email,
+      userId: userData?.id,
+    );
   }
 
   @override
@@ -176,14 +143,53 @@ class _CourseDetailViewState extends State<CourseDetailView> with TickerProvider
     return Scaffold(
       backgroundColor: isDark ? ThemeColors.backgroundDark : Colors.white,
       body: SafeArea(
-        child: BlocBuilder<CourseDetailBloc, CourseDetailState>(
+        child: BlocConsumer<CourseDetailBloc, CourseDetailState>(
+          listener: (context, state) {
+            if (state is CourseDetailLoaded) {
+              if (state.createdOrder != null && !state.isProcessingPayment) {
+                // Order created successfully, open Razorpay
+                _openRazorpay(state.course, state.createdOrder!.gatewayKey, state.createdOrder!.orderId);
+              }
+              if (state.paymentError != null && !state.isProcessingPayment) {
+                // Show error
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.paymentError!)));
+              }
+              if (state.paymentSuccess && !state.isProcessingPayment) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment and verification successful!'), backgroundColor: Colors.green));
+                
+                final firstSection = state.course.curriculum.isNotEmpty ? state.course.curriculum.first : null;
+                final firstLesson = firstSection?.lessons.isNotEmpty == true ? firstSection!.lessons.first : null;
+                if (firstLesson != null && firstLesson.videoUrl.isNotEmpty) {
+                  Future.delayed(const Duration(seconds: 1), () {
+                    if (!mounted) return;
+                    Navigator.pushNamed(context, AppRoutes.videoPlayer, arguments: {
+                      'courseId': state.course.id,
+                      'videoId': firstLesson.id,
+                      'videoUrl': firstLesson.videoUrl,
+                    }).then((_) => setState(() {}));
+                  });
+                }
+              }
+            }
+          },
           builder: (context, state) {
             if (state is CourseDetailLoading) {
               return Center(child: CircularProgressIndicator(color: isDark ? ThemeColors.burgundyLight : const Color(0xFF6A1B9A)));
             }
   
             if (state is CourseDetailLoaded) {
-              return _buildMainContent(context, state, isDark);
+              return Stack(
+                children: [
+                  _buildMainContent(context, state, isDark),
+                  if (state.isProcessingPayment)
+                    Container(
+                      color: Colors.black45,
+                      child: Center(
+                        child: CircularProgressIndicator(color: isDark ? ThemeColors.burgundyLight : const Color(0xFF6A1B9A)),
+                      ),
+                    ),
+                ],
+              );
             }
   
             if (state is CourseDetailError) {
@@ -296,7 +302,7 @@ class _CourseDetailViewState extends State<CourseDetailView> with TickerProvider
               ),
             ],
           ),
-          _buildStickyFooter(context, course, isDark),
+          _buildStickyFooter(context, state, isDark),
         ],
       ),
     );
@@ -357,7 +363,18 @@ class _CourseDetailViewState extends State<CourseDetailView> with TickerProvider
             child: GestureDetector(
               onTap: videoUrl.isEmpty
                   ? null
-                  : () => Navigator.pushNamed(
+                  : () {
+                      if (!state.course.isEnrolled && previewLesson?.isPreview != true) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Please enroll to watch this video', style: GoogleFonts.outfit(color: Colors.white)),
+                            backgroundColor: const Color(0xFF6A1B9A),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                        return;
+                      }
+                      Navigator.pushNamed(
                         context,
                         AppRoutes.videoPlayer,
                         arguments: {
@@ -365,7 +382,8 @@ class _CourseDetailViewState extends State<CourseDetailView> with TickerProvider
                           'videoId': videoId,
                           'videoUrl': videoUrl,
                         },
-                      ).then((_) => setState(() {})),
+                      ).then((_) => setState(() {}));
+                    },
               child: Container(
                 width: 64,
                 height: 64,
@@ -675,7 +693,18 @@ class _CourseDetailViewState extends State<CourseDetailView> with TickerProvider
                   children: section.lessons.map((lesson) => GestureDetector(
                     onTap: lesson.videoUrl.isEmpty
                         ? null
-                        : () => Navigator.pushNamed(
+                        : () {
+                            if (!state.course.isEnrolled && !lesson.isPreview) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Please enroll to watch this video', style: GoogleFonts.outfit(color: Colors.white)),
+                                  backgroundColor: const Color(0xFF6A1B9A),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                              return;
+                            }
+                            Navigator.pushNamed(
                               context,
                               AppRoutes.videoPlayer,
                               arguments: {
@@ -683,7 +712,8 @@ class _CourseDetailViewState extends State<CourseDetailView> with TickerProvider
                                 'videoId': lesson.id,
                                 'videoUrl': lesson.videoUrl,
                               },
-                            ).then((_) => setState(() {})),
+                            ).then((_) => setState(() {}));
+                          },
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(border: Border(top: BorderSide(color: isDark ? Colors.white10 : Colors.grey.shade100))),
@@ -766,7 +796,8 @@ class _CourseDetailViewState extends State<CourseDetailView> with TickerProvider
     );
   }
 
-  Widget _buildStickyFooter(BuildContext context, CourseDetail course, bool isDark) {
+  Widget _buildStickyFooter(BuildContext context, CourseDetailLoaded state, bool isDark) {
+    final course = state.course;
     return Positioned(
       bottom: 0,
       left: 0,
@@ -791,7 +822,7 @@ class _CourseDetailViewState extends State<CourseDetailView> with TickerProvider
             const SizedBox(width: 24),
             Expanded(
               child: ElevatedButton(
-                onPressed: _enrollLoading ? null : () => _startEnrollment(course),
+                onPressed: (state.isProcessingPayment) ? null : () => _startEnrollment(course),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF6A1B9A),
                   foregroundColor: Colors.white,
